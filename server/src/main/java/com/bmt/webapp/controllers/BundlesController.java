@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -95,7 +96,7 @@ public class BundlesController {
             bundle.setMinutes(bundleDto.getMinutes());
             bundle.setSms(bundleDto.getSms());
             bundle.setValidUntil(bundleDto.getValidUntil());
-            bundle.setWeekend(bundleDto.isWeekend());
+            bundle.setIsWeekend(bundleDto.isWeekend());
             bundle.setStatus(bundleDto.getStatus());
             bundle.setCreatedAt(new Date());
             bundle.setUpdatedAt(new Date());
@@ -131,6 +132,10 @@ public class BundlesController {
             @Valid @RequestBody BundleDto bundleDto
     ) {
         try {
+            // Log the received data for debugging
+            System.out.println("Received update request for bundle ID: " + id);
+            System.out.println("BundleDto data: " + bundleDto.getName() + ", isWeekend: " + bundleDto.isWeekend());
+            
             Optional<Bundle> existingBundleOpt = bundleRepo.findById(id);
             if (!existingBundleOpt.isPresent()) {
                 return ResponseEntity.status(404)
@@ -146,11 +151,13 @@ public class BundlesController {
             existingBundle.setMinutes(bundleDto.getMinutes());
             existingBundle.setSms(bundleDto.getSms());
             existingBundle.setValidUntil(bundleDto.getValidUntil());
-            existingBundle.setWeekend(bundleDto.isWeekend());
+                   existingBundle.setIsWeekend(bundleDto.isWeekend());
             existingBundle.setStatus(bundleDto.getStatus());
             existingBundle.setUpdatedAt(new Date());
 
             Bundle updatedBundle = bundleRepo.save(existingBundle);
+            System.out.println("Bundle updated successfully. Final isWeekend value: " + updatedBundle.isWeekend());
+            
             SuccessResponse successResponse = new SuccessResponse(
                 "Bundle updated successfully!", 
                 updatedBundle
@@ -190,6 +197,22 @@ public class BundlesController {
     @PostMapping("/purchase")
     public ResponseEntity<?> purchaseBundle(@RequestBody PurchaseRequest purchaseRequest) {
         try {
+            // Validate phone number format
+            String phoneNumber = purchaseRequest.getPhoneNumber();
+            if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(new ErrorResponse("Phone number is required"));
+            }
+            
+            // Remove any spaces or special characters
+            phoneNumber = phoneNumber.replaceAll("[^0-9]", "");
+            
+            // Check if phone number is 10 digits and starts with 078 or 079
+            if (phoneNumber.length() != 10 || (!phoneNumber.startsWith("078") && !phoneNumber.startsWith("079"))) {
+                return ResponseEntity.badRequest()
+                    .body(new ErrorResponse("Phone number must be 10 digits and start with 078 or 079"));
+            }
+
             // Validate bundle exists
             Optional<Bundle> bundleOpt = bundleRepo.findById(purchaseRequest.getBundleId());
             if (!bundleOpt.isPresent()) {
@@ -203,6 +226,18 @@ public class BundlesController {
             if (!"Active".equals(bundle.getStatus())) {
                 return ResponseEntity.badRequest()
                     .body(new ErrorResponse("Bundle is not available for purchase"));
+            }
+
+            // Check weekend bundle restriction
+            if (bundle.isWeekend()) {
+                Calendar calendar = Calendar.getInstance();
+                int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+                // Sunday = 1, Monday = 2, ..., Saturday = 7
+                // Weekend bundles can only be purchased on Friday (6), Saturday (7), or Sunday (1)
+                if (dayOfWeek != Calendar.FRIDAY && dayOfWeek != Calendar.SATURDAY && dayOfWeek != Calendar.SUNDAY) {
+                    return ResponseEntity.badRequest()
+                        .body(new ErrorResponse("Weekend bundles can only be purchased from Friday to Sunday"));
+                }
             }
 
             // Create purchase record

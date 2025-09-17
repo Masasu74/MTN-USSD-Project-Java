@@ -1,6 +1,7 @@
 package com.bmt.webapp.models;
 
 import jakarta.validation.constraints.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * BundleDto - Data Transfer Object for Bundle operations
@@ -16,9 +17,16 @@ public class BundleDto {
     @Min(value = 0, message = "Price must be positive")
     private int price;
 
+    @NotEmpty(message = "Data is required")
     private String data;
+
+    @NotEmpty(message = "Minutes is required")
     private String minutes;
+
+    @NotEmpty(message = "SMS is required")
     private String sms;
+
+    @NotEmpty(message = "Valid Until is required")
     private String validUntil;
     private boolean isWeekend;
 
@@ -74,12 +82,13 @@ public class BundleDto {
         this.validUntil = validUntil;
     }
 
+    @JsonProperty("isWeekend")
     public boolean isWeekend() {
         return isWeekend;
     }
 
-    public void setWeekend(boolean weekend) {
-        isWeekend = weekend;
+    public void setIsWeekend(boolean isWeekend) {
+        this.isWeekend = isWeekend;
     }
 
     public String getStatus() {

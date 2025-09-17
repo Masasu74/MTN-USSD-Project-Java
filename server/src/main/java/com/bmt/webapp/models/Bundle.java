@@ -1,6 +1,7 @@
 package com.bmt.webapp.models;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Date;
 
@@ -85,12 +86,13 @@ public class Bundle {
         this.validUntil = validUntil;
     }
 
+    @JsonProperty("isWeekend")
     public boolean isWeekend() {
         return isWeekend;
     }
 
-    public void setWeekend(boolean weekend) {
-        isWeekend = weekend;
+    public void setIsWeekend(boolean isWeekend) {
+        this.isWeekend = isWeekend;
     }
 
     public String getStatus() {
