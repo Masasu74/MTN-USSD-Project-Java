@@ -22,14 +22,10 @@ public class Purchase {
     private Date purchaseDate;         // When purchase was made
     private String purchaseId;         // Unique purchase ID (e.g., PUR-1234567890)
 
-    // Bundle information (stored as JSON or separate fields)
-    private String bundleName;         // Bundle name
-    private int bundlePrice;           // Bundle price
-    private int bundleData;            // Bundle data allowance in MB
-    private int bundleMinutes;         // Bundle minutes allowance
-    private int bundleSms;             // Bundle SMS allowance
-    private int bundleValidUntil;      // Bundle validity period in hours
-    private boolean bundleIsWeekend;   // Whether bundle is weekend type
+    // Foreign key relationship to Bundle
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bundle_id", nullable = false)
+    private Bundle bundle;             // Reference to the purchased bundle
 
     // Getters and Setters
     public int getId() {
@@ -80,59 +76,40 @@ public class Purchase {
         this.purchaseId = purchaseId;
     }
 
-    public String getBundleName() {
-        return bundleName;
+    public Bundle getBundle() {
+        return bundle;
     }
 
-    public void setBundleName(String bundleName) {
-        this.bundleName = bundleName;
+    public void setBundle(Bundle bundle) {
+        this.bundle = bundle;
+    }
+
+    // Convenience methods to access bundle details
+    public String getBundleName() {
+        return bundle != null ? bundle.getName() : null;
     }
 
     public int getBundlePrice() {
-        return bundlePrice;
-    }
-
-    public void setBundlePrice(int bundlePrice) {
-        this.bundlePrice = bundlePrice;
+        return bundle != null ? bundle.getPrice() : 0;
     }
 
     public int getBundleData() {
-        return bundleData;
-    }
-
-    public void setBundleData(int bundleData) {
-        this.bundleData = bundleData;
+        return bundle != null ? bundle.getData() : 0;
     }
 
     public int getBundleMinutes() {
-        return bundleMinutes;
-    }
-
-    public void setBundleMinutes(int bundleMinutes) {
-        this.bundleMinutes = bundleMinutes;
+        return bundle != null ? bundle.getMinutes() : 0;
     }
 
     public int getBundleSms() {
-        return bundleSms;
-    }
-
-    public void setBundleSms(int bundleSms) {
-        this.bundleSms = bundleSms;
+        return bundle != null ? bundle.getSms() : 0;
     }
 
     public int getBundleValidUntil() {
-        return bundleValidUntil;
-    }
-
-    public void setBundleValidUntil(int bundleValidUntil) {
-        this.bundleValidUntil = bundleValidUntil;
+        return bundle != null ? bundle.getValidUntil() : 0;
     }
 
     public boolean isBundleIsWeekend() {
-        return bundleIsWeekend;
-    }
-
-    public void setBundleIsWeekend(boolean bundleIsWeekend) {
-        this.bundleIsWeekend = bundleIsWeekend;
+        return bundle != null && bundle.isWeekend();
     }
 }

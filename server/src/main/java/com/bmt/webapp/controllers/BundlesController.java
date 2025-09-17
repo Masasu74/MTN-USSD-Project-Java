@@ -173,19 +173,35 @@ public class BundlesController {
      * DELETE /api/bundles/{id} - Delete bundle
      * Removes a bundle from the system
      * Used by admin interface for removing bundle offerings
+     * Note: Bundle cannot be deleted if it has associated purchases
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteBundle(@PathVariable int id) {
-        Optional<Bundle> bundle = bundleRepo.findById(id);
-        if (bundle.isPresent()) {
-            bundleRepo.delete(bundle.get());
+        try {
+            Optional<Bundle> bundleOpt = bundleRepo.findById(id);
+            if (!bundleOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse("Bundle not found with ID: " + id));
+            }
+
+            Bundle bundle = bundleOpt.get();
+            
+            // Check if bundle has any purchases
+            List<Purchase> purchases = purchaseRepo.findByBundleId(id);
+            if (!purchases.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ErrorResponse("Cannot delete bundle. It has " + purchases.size() + 
+                        " associated purchase(s). Please delete purchases first or set bundle status to 'Inactive'."));
+            }
+
+            bundleRepo.delete(bundle);
             SuccessResponse successResponse = new SuccessResponse(
                 "Bundle deleted successfully!"
             );
             return ResponseEntity.ok(successResponse);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ErrorResponse("Bundle not found with ID: " + id));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse("Failed to delete bundle: " + e.getMessage()));
         }
     }
 
@@ -248,14 +264,8 @@ public class BundlesController {
             purchase.setPurchaseDate(new Date());
             purchase.setPurchaseId("PUR-" + System.currentTimeMillis());
 
-            // Store bundle details in purchase
-            purchase.setBundleName(bundle.getName());
-            purchase.setBundlePrice(bundle.getPrice());
-            purchase.setBundleData(bundle.getData());
-            purchase.setBundleMinutes(bundle.getMinutes());
-            purchase.setBundleSms(bundle.getSms());
-            purchase.setBundleValidUntil(bundle.getValidUntil());
-            purchase.setBundleIsWeekend(bundle.isWeekend());
+            // Set the bundle reference (foreign key relationship)
+            purchase.setBundle(bundle);
 
             Purchase savedPurchase = purchaseRepo.save(purchase);
 

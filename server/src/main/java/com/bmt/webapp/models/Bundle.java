@@ -2,8 +2,10 @@ package com.bmt.webapp.models;
 
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * Bundle Entity - Represents MTN Gwamon Bundle offerings
@@ -28,6 +30,11 @@ public class Bundle {
     private String status;        // Bundle status (Active, Inactive)
     private Date createdAt;       // When bundle was created
     private Date updatedAt;       // When bundle was last updated
+
+    // One-to-many relationship with purchases
+    @OneToMany(mappedBy = "bundle", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Purchase> purchases;
 
     // Getters and Setters for Bundle entity
     public int getId() {
@@ -117,5 +124,13 @@ public class Bundle {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public List<Purchase> getPurchases() {
+        return purchases;
+    }
+
+    public void setPurchases(List<Purchase> purchases) {
+        this.purchases = purchases;
     }
 }
