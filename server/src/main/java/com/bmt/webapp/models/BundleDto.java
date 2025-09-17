@@ -17,17 +17,21 @@ public class BundleDto {
     @Min(value = 0, message = "Price must be positive")
     private int price;
 
-    @NotEmpty(message = "Data is required")
-    private String data;
+    @NotNull(message = "Data is required")
+    @Min(value = 0, message = "Data must be positive")
+    private int data;
 
-    @NotEmpty(message = "Minutes is required")
-    private String minutes;
+    @NotNull(message = "Minutes is required")
+    @Min(value = 0, message = "Minutes must be positive")
+    private int minutes;
 
-    @NotEmpty(message = "SMS is required")
-    private String sms;
+    @NotNull(message = "SMS is required")
+    @Min(value = 0, message = "SMS must be positive")
+    private int sms;
 
-    @NotEmpty(message = "Valid Until is required")
-    private String validUntil;
+    @NotNull(message = "Valid Until is required")
+    @Min(value = 1, message = "Valid Until must be at least 1 hour")
+    private int validUntil;
     private boolean isWeekend;
 
     @NotEmpty(message = "Status is required")
@@ -50,35 +54,35 @@ public class BundleDto {
         this.price = price;
     }
 
-    public String getData() {
+    public int getData() {
         return data;
     }
 
-    public void setData(String data) {
+    public void setData(int data) {
         this.data = data;
     }
 
-    public String getMinutes() {
+    public int getMinutes() {
         return minutes;
     }
 
-    public void setMinutes(String minutes) {
+    public void setMinutes(int minutes) {
         this.minutes = minutes;
     }
 
-    public String getSms() {
+    public int getSms() {
         return sms;
     }
 
-    public void setSms(String sms) {
+    public void setSms(int sms) {
         this.sms = sms;
     }
 
-    public String getValidUntil() {
+    public int getValidUntil() {
         return validUntil;
     }
 
-    public void setValidUntil(String validUntil) {
+    public void setValidUntil(int validUntil) {
         this.validUntil = validUntil;
     }
 

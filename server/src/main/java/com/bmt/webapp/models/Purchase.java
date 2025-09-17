@@ -25,10 +25,10 @@ public class Purchase {
     // Bundle information (stored as JSON or separate fields)
     private String bundleName;         // Bundle name
     private int bundlePrice;           // Bundle price
-    private String bundleData;         // Bundle data allowance
-    private String bundleMinutes;      // Bundle minutes allowance
-    private String bundleSms;          // Bundle SMS allowance
-    private String bundleValidUntil;   // Bundle validity period
+    private int bundleData;            // Bundle data allowance in MB
+    private int bundleMinutes;         // Bundle minutes allowance
+    private int bundleSms;             // Bundle SMS allowance
+    private int bundleValidUntil;      // Bundle validity period in hours
     private boolean bundleIsWeekend;   // Whether bundle is weekend type
 
     // Getters and Setters
@@ -96,35 +96,35 @@ public class Purchase {
         this.bundlePrice = bundlePrice;
     }
 
-    public String getBundleData() {
+    public int getBundleData() {
         return bundleData;
     }
 
-    public void setBundleData(String bundleData) {
+    public void setBundleData(int bundleData) {
         this.bundleData = bundleData;
     }
 
-    public String getBundleMinutes() {
+    public int getBundleMinutes() {
         return bundleMinutes;
     }
 
-    public void setBundleMinutes(String bundleMinutes) {
+    public void setBundleMinutes(int bundleMinutes) {
         this.bundleMinutes = bundleMinutes;
     }
 
-    public String getBundleSms() {
+    public int getBundleSms() {
         return bundleSms;
     }
 
-    public void setBundleSms(String bundleSms) {
+    public void setBundleSms(int bundleSms) {
         this.bundleSms = bundleSms;
     }
 
-    public String getBundleValidUntil() {
+    public int getBundleValidUntil() {
         return bundleValidUntil;
     }
 
-    public void setBundleValidUntil(String bundleValidUntil) {
+    public void setBundleValidUntil(int bundleValidUntil) {
         this.bundleValidUntil = bundleValidUntil;
     }
 

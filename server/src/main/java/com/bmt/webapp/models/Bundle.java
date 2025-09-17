@@ -20,10 +20,10 @@ public class Bundle {
     // Bundle basic information
     private String name;           // Bundle name (e.g., "Gwamon Bundle Premium")
     private int price;            // Price in FRW
-    private String data;          // Data allowance (e.g., "8GB")
-    private String minutes;       // Minutes allowance (e.g., "800Mins")
-    private String sms;           // SMS allowance (e.g., "30SMS")
-    private String validUntil;    // Validity period (e.g., "Sunday 23:59")
+    private int data;             // Data allowance in MB (e.g., 8000 for 8GB)
+    private int minutes;          // Minutes allowance (e.g., 800)
+    private int sms;              // SMS allowance (e.g., 30)
+    private int validUntil;       // Validity period in hours (e.g., 168 for 7 days)
     private boolean isWeekend;    // Whether it's a weekend bundle
     private String status;        // Bundle status (Active, Inactive)
     private Date createdAt;       // When bundle was created
@@ -54,35 +54,35 @@ public class Bundle {
         this.price = price;
     }
 
-    public String getData() {
+    public int getData() {
         return data;
     }
 
-    public void setData(String data) {
+    public void setData(int data) {
         this.data = data;
     }
 
-    public String getMinutes() {
+    public int getMinutes() {
         return minutes;
     }
 
-    public void setMinutes(String minutes) {
+    public void setMinutes(int minutes) {
         this.minutes = minutes;
     }
 
-    public String getSms() {
+    public int getSms() {
         return sms;
     }
 
-    public void setSms(String sms) {
+    public void setSms(int sms) {
         this.sms = sms;
     }
 
-    public String getValidUntil() {
+    public int getValidUntil() {
         return validUntil;
     }
 
-    public void setValidUntil(String validUntil) {
+    public void setValidUntil(int validUntil) {
         this.validUntil = validUntil;
     }
 
