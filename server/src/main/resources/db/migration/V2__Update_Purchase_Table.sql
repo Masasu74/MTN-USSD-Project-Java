@@ -16,3 +16,5 @@ ALTER TABLE mtn_purchases ADD COLUMN bundle_id INT NOT NULL;
 -- Add foreign key constraint
 ALTER TABLE mtn_purchases ADD CONSTRAINT fk_purchase_bundle 
     FOREIGN KEY (bundle_id) REFERENCES mtn_bundles(id);
+
+

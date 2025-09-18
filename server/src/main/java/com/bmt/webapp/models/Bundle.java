@@ -133,4 +133,44 @@ public class Bundle {
     public void setPurchases(List<Purchase> purchases) {
         this.purchases = purchases;
     }
+
+    /**
+     * Formats the bundle for USSD display
+     * Returns a string like "1500FRW=(8GB+800Mins)+30SMS"
+     */
+    public String getUssdDisplayFormat() {
+        StringBuilder display = new StringBuilder();
+        display.append(price).append("FRW=");
+        
+        // Add data in GB if >= 1000MB, otherwise in MB
+        if (data >= 1000) {
+            display.append(data / 1000).append("GB");
+        } else {
+            display.append(data).append("MB");
+        }
+        
+        // Add minutes if > 0
+        if (minutes > 0) {
+            display.append("+").append(minutes).append("Mins");
+        }
+        
+        // Add SMS if > 0
+        if (sms > 0) {
+            display.append("+").append(sms).append("SMS");
+        }
+        
+        return display.toString();
+    }
+
+    /**
+     * Gets the bundle name for USSD display
+     * For weekend bundles, returns just the name, for others returns the formatted display
+     */
+    public String getUssdDisplayName() {
+        if (isWeekend) {
+            return name; // For weekend bundles, just show the name like "Gwamon' Weekend"
+        } else {
+            return getUssdDisplayFormat(); // For regular bundles, show the formatted string
+        }
+    }
 }

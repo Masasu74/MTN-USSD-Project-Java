@@ -1,6 +1,7 @@
 package com.bmt.webapp.models;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Date;
 
 /**
@@ -23,7 +24,7 @@ public class Purchase {
     private String purchaseId;         // Unique purchase ID (e.g., PUR-1234567890)
 
     // Foreign key relationship to Bundle
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "bundle_id", nullable = false)
     private Bundle bundle;             // Reference to the purchased bundle
 
@@ -85,30 +86,37 @@ public class Purchase {
     }
 
     // Convenience methods to access bundle details
+    @JsonProperty("bundleName")
     public String getBundleName() {
         return bundle != null ? bundle.getName() : null;
     }
 
+    @JsonProperty("bundlePrice")
     public int getBundlePrice() {
         return bundle != null ? bundle.getPrice() : 0;
     }
 
+    @JsonProperty("bundleData")
     public int getBundleData() {
         return bundle != null ? bundle.getData() : 0;
     }
 
+    @JsonProperty("bundleMinutes")
     public int getBundleMinutes() {
         return bundle != null ? bundle.getMinutes() : 0;
     }
 
+    @JsonProperty("bundleSms")
     public int getBundleSms() {
         return bundle != null ? bundle.getSms() : 0;
     }
 
+    @JsonProperty("bundleValidUntil")
     public int getBundleValidUntil() {
         return bundle != null ? bundle.getValidUntil() : 0;
     }
 
+    @JsonProperty("bundleIsWeekend")
     public boolean isBundleIsWeekend() {
         return bundle != null && bundle.isWeekend();
     }

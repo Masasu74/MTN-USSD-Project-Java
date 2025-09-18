@@ -14,16 +14,23 @@ import java.util.List;
  */
 public interface PurchaseRepository extends JpaRepository<Purchase, Integer> {
     // Find purchases by phone number
-    List<Purchase> findByPhoneNumber(String phoneNumber, Sort sort);
+    @Query("SELECT p FROM Purchase p WHERE p.phoneNumber = :phoneNumber ORDER BY p.purchaseDate DESC")
+    List<Purchase> findByPhoneNumber(@Param("phoneNumber") String phoneNumber);
     
     // Find purchases by status
-    List<Purchase> findByStatus(String status, Sort sort);
+    @Query("SELECT p FROM Purchase p WHERE p.status = :status")
+    List<Purchase> findByStatus(@Param("status") String status, Sort sort);
     
     // Find purchases by payment method
-    List<Purchase> findByPaymentMethod(String paymentMethod, Sort sort);
+    @Query("SELECT p FROM Purchase p WHERE p.paymentMethod = :paymentMethod")
+    List<Purchase> findByPaymentMethod(@Param("paymentMethod") String paymentMethod, Sort sort);
     
     // Find purchases by bundle ID (for foreign key constraint checking)
     @Query("SELECT p FROM Purchase p WHERE p.bundle.id = :bundleId")
     List<Purchase> findByBundleId(@Param("bundleId") int bundleId);
+    
+    // Find all purchases with proper ordering
+    @Query("SELECT p FROM Purchase p ORDER BY p.purchaseDate DESC")
+    List<Purchase> findAllPurchases();
 }
 

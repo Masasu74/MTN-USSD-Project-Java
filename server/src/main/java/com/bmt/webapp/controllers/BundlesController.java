@@ -171,9 +171,9 @@ public class BundlesController {
 
     /**
      * DELETE /api/bundles/{id} - Delete bundle
-     * Removes a bundle from the system
+     * Removes a bundle from the system along with all associated purchases
      * Used by admin interface for removing bundle offerings
-     * Note: Bundle cannot be deleted if it has associated purchases
+     * Note: This will automatically delete all associated purchases (cascading delete)
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteBundle(@PathVariable int id) {
@@ -186,18 +186,24 @@ public class BundlesController {
 
             Bundle bundle = bundleOpt.get();
             
-            // Check if bundle has any purchases
+            // Get all purchases associated with this bundle
             List<Purchase> purchases = purchaseRepo.findByBundleId(id);
+            int purchaseCount = purchases.size();
+            
+            // Delete all associated purchases first (cascading delete)
             if (!purchases.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new ErrorResponse("Cannot delete bundle. It has " + purchases.size() + 
-                        " associated purchase(s). Please delete purchases first or set bundle status to 'Inactive'."));
+                purchaseRepo.deleteAll(purchases);
+                System.out.println("Deleted " + purchaseCount + " associated purchase(s) for bundle ID: " + id);
             }
 
+            // Delete the bundle
             bundleRepo.delete(bundle);
-            SuccessResponse successResponse = new SuccessResponse(
-                "Bundle deleted successfully!"
-            );
+            
+            String message = purchaseCount > 0 ? 
+                "Bundle and " + purchaseCount + " associated purchase(s) deleted successfully!" :
+                "Bundle deleted successfully!";
+                
+            SuccessResponse successResponse = new SuccessResponse(message);
             return ResponseEntity.ok(successResponse);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -291,10 +297,9 @@ public class BundlesController {
             @RequestParam(required = false) String phoneNumber) {
         List<Purchase> purchases;
         if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
-            purchases = purchaseRepo.findByPhoneNumber(phoneNumber, 
-                Sort.by(Sort.Direction.DESC, "purchaseDate"));
+            purchases = purchaseRepo.findByPhoneNumber(phoneNumber);
         } else {
-            purchases = purchaseRepo.findAll(Sort.by(Sort.Direction.DESC, "purchaseDate"));
+            purchases = purchaseRepo.findAllPurchases();
         }
         return ResponseEntity.ok(purchases);
     }
