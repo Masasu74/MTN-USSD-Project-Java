@@ -19,4 +19,7 @@ public interface BundleRepository extends JpaRepository<Bundle, Integer> {
     
     // Find bundles by name (for search functionality)
     List<Bundle> findByNameContainingIgnoreCase(String name, Sort sort);
+    
+    // Find active bundles ordered by ID descending (for USSD menu)
+    List<Bundle> findByStatusOrderByIdDesc(String status);
 }
