@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USSD Test Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .phone-display {
+            background: #000;
+            color: #fff;
+            padding: 20px;
+            border-radius: 20px;
+            margin: 20px 0;
+            font-family: monospace;
+            min-height: 200px;
+            white-space: pre-line;
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .response {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 USSD Test Interface</h1>
+        <p>Test your MTN Gwamon Bundle USSD application</p>
+        
+        <div class="phone-display" id="phoneDisplay">
+Welcome to MTN Gwamon Bundle Test
+Dial *384*25345# to start
+        </div>
+        
+        <div class="input-group">
+            <label for="sessionId">Session ID:</label>
+            <input type="text" id="sessionId" value="test_session_123">
+        </div>
+        
+        <div class="input-group">
+            <label for="phoneNumber">Phone Number:</label>
+            <input type="text" id="phoneNumber" value="+254700000000">
+        </div>
+        
+        <div class="input-group">
+            <label for="userInput">User Input (leave empty for initial request):</label>
+            <input type="text" id="userInput" placeholder="e.g., 1, 1*1, etc.">
+        </div>
+        
+        <button onclick="testUssd()">📞 Send USSD Request</button>
+        <button onclick="resetTest()">🔄 Reset</button>
+        
+        <div id="response" class="response" style="display: none;"></div>
+    </div>
+
+    <script>
+        const ngrokUrl = 'https://0c822acc28ca.ngrok-free.app';
+        
+        async function testUssd() {
+            const sessionId = document.getElementById('sessionId').value;
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const userInput = document.getElementById('userInput').value;
+            
+            const phoneDisplay = document.getElementById('phoneDisplay');
+            const responseDiv = document.getElementById('response');
+            
+            // Show loading
+            phoneDisplay.textContent = 'Connecting...';
+            responseDiv.style.display = 'none';
+            
+            try {
+                const formData = new URLSearchParams();
+                formData.append('sessionId', sessionId);
+                formData.append('phoneNumber', phoneNumber);
+                formData.append('text', userInput);
+                formData.append('serviceCode', '*384*25345#');
+                
+                const response = await fetch(`${ngrokUrl}/ussd`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                // Display the response
+                phoneDisplay.textContent = data.message;
+                
+                // Show response details
+                responseDiv.innerHTML = `
+                    <strong>Response Details:</strong><br>
+                    Session State: ${data.sessionState}<br>
+                    Status: ${response.status} ${response.statusText}
+                `;
+                responseDiv.style.display = 'block';
+                responseDiv.className = 'response';
+                
+            } catch (error) {
+                phoneDisplay.textContent = 'Error: Could not connect to server';
+                responseDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
+                responseDiv.style.display = 'block';
+                responseDiv.className = 'response error';
+            }
+        }
+        
+        function resetTest() {
+            document.getElementById('userInput').value = '';
+            document.getElementById('phoneDisplay').textContent = 'Welcome to MTN Gwamon Bundle Test\nDial *384*25345# to start';
+            document.getElementById('response').style.display = 'none';
+        }
+        
+        // Test initial request on page load
+        window.onload = function() {
+            testUssd();
+        };
+    </script>
+</body>
+</html>

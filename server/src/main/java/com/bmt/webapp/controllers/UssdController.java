@@ -217,6 +217,14 @@ public class UssdController {
     }
 
     /**
+     * GET /ussd/test - Simple test endpoint for debugging
+     */
+    @GetMapping("/test")
+    public UssdResponse testUssd() {
+        return showMainMenu();
+    }
+
+    /**
      * USSD Response model
      */
     public static class UssdResponse {
