@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * UssdController - Handles USSD requests for MTN Gwamon Bundle system
@@ -49,8 +48,8 @@ public class UssdController {
      * @param request USSD request containing session info and user input
      * @return USSD response with menu or confirmation
      */
-    @PostMapping(consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public UssdResponse handleUssdRequest(@ModelAttribute UssdRequest request) {
+    @PostMapping(consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
+    public String handleUssdRequest(@ModelAttribute UssdRequest request) {
         try {
             String sessionId = request.getSessionId();
             String phoneNumber = request.getPhoneNumber();
@@ -64,26 +63,26 @@ public class UssdController {
             // Handle different stages of USSD flow
             if (userInput.length == 0) {
                 // Initial request - show main menu
-                return showMainMenu();
+                return showMainMenuText();
             } else if (userInput.length == 1) {
-                // User selected an option from main menu
-                return handleMainMenuSelection(userInput[0], phoneNumber);
+                // User selected an option from main menu (including pagination)
+                return handleMainMenuSelectionText(userInput[0], phoneNumber);
             } else if (userInput.length == 2) {
                 // User selected payment method
-                return handlePaymentSelection(userInput[0], userInput[1], phoneNumber);
+                return handlePaymentSelectionText(userInput[0], userInput[1], phoneNumber);
             } else {
                 // Invalid input
-                return new UssdResponse("Invalid selection. Please try again.", "END");
+                return "Invalid selection. Please try again.";
             }
             
         } catch (Exception e) {
             System.err.println("Error processing USSD request: " + e.getMessage());
-            return new UssdResponse("Sorry, an error occurred. Please try again later.", "END");
+            return "Sorry, an error occurred. Please try again later.";
         }
     }
 
     /**
-     * Shows the main bundle menu
+     * Shows the main bundle menu with all bundles
      */
     private UssdResponse showMainMenu() {
         List<Bundle> bundles = bundleRepo.findByStatusOrderByIdDesc("Active");
@@ -94,14 +93,34 @@ public class UssdController {
         
         int optionNumber = 1;
         for (Bundle bundle : bundles) {
-            if (optionNumber <= 4) { // Limit to 4 options for USSD display
-                menu.append(optionNumber).append(") ").append(bundle.getUssdDisplayName()).append("\n");
-                optionNumber++;
-            }
+            menu.append(optionNumber).append(") ").append(bundle.getUssdDisplayName()).append("\n");
+            optionNumber++;
         }
+        
         menu.append("0) Go back");
         
         return new UssdResponse(menu.toString(), "CON");
+    }
+
+    /**
+     * Shows the main bundle menu as plain text
+     */
+    private String showMainMenuText() {
+        List<Bundle> bundles = bundleRepo.findByStatusOrderByIdDesc("Active");
+        
+        StringBuilder menu = new StringBuilder();
+        menu.append("CON MTN Gwamon Bundles\n");
+        menu.append("Valid till Sunday 23:59\n\n");
+        
+        int optionNumber = 1;
+        for (Bundle bundle : bundles) {
+            menu.append(optionNumber).append(") ").append(bundle.getUssdDisplayName()).append("\n");
+            optionNumber++;
+        }
+        
+        menu.append("0) Go back");
+        
+        return menu.toString();
     }
 
     /**
@@ -116,34 +135,80 @@ public class UssdController {
             }
             
             List<Bundle> bundles = bundleRepo.findByStatusOrderByIdDesc("Active");
-            if (bundleIndex < 1 || bundleIndex > bundles.size()) {
+            
+            // Handle selection for any bundle (1-6)
+            if (bundleIndex >= 1 && bundleIndex <= bundles.size()) {
+                Bundle selectedBundle = bundles.get(bundleIndex - 1);
+                
+                // Check weekend bundle restriction
+                if (selectedBundle.isWeekend()) {
+                    Calendar calendar = Calendar.getInstance();
+                    int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+                    if (dayOfWeek != Calendar.FRIDAY && dayOfWeek != Calendar.SATURDAY && dayOfWeek != Calendar.SUNDAY) {
+                        return new UssdResponse("Gwamon' Weekend is only available from Friday to Sunday", "END");
+                    }
+                }
+                
+                // Show payment options
+                StringBuilder paymentMenu = new StringBuilder();
+                paymentMenu.append("Pay ").append(selectedBundle.getUssdDisplayFormat()).append(" via:\n");
+                paymentMenu.append("1. Airtime\n");
+                paymentMenu.append("2. MoMo\n");
+                paymentMenu.append("0. Go back");
+                
+                return new UssdResponse(paymentMenu.toString(), "CON");
+            } else {
                 return new UssdResponse("Invalid selection. Please try again.", "END");
             }
-            
-            Bundle selectedBundle = bundles.get(bundleIndex - 1);
-            
-            // Check weekend bundle restriction
-            if (selectedBundle.isWeekend()) {
-                Calendar calendar = Calendar.getInstance();
-                int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
-                if (dayOfWeek != Calendar.FRIDAY && dayOfWeek != Calendar.SATURDAY && dayOfWeek != Calendar.SUNDAY) {
-                    return new UssdResponse("Gwamon' Weekend is only available from Friday to Sunday", "END");
-                }
-            }
-            
-            // Show payment options
-            StringBuilder paymentMenu = new StringBuilder();
-            paymentMenu.append("Pay ").append(selectedBundle.getUssdDisplayFormat()).append(" via:\n");
-            paymentMenu.append("1. Airtime\n");
-            paymentMenu.append("2. MoMo\n");
-            paymentMenu.append("0. Go back");
-            
-            return new UssdResponse(paymentMenu.toString(), "CON");
             
         } catch (NumberFormatException e) {
             return new UssdResponse("Invalid selection. Please try again.", "END");
         }
     }
+
+    /**
+     * Handles main menu selection as plain text
+     */
+    private String handleMainMenuSelectionText(String selection, String phoneNumber) {
+        try {
+            int bundleIndex = Integer.parseInt(selection);
+            
+            if (bundleIndex == 0) {
+                return "END Thank you for using MTN Gwamon!";
+            }
+            
+            List<Bundle> bundles = bundleRepo.findByStatusOrderByIdDesc("Active");
+            
+            // Handle selection for any bundle (1-6)
+            if (bundleIndex >= 1 && bundleIndex <= bundles.size()) {
+                Bundle selectedBundle = bundles.get(bundleIndex - 1);
+                
+                // Check weekend bundle restriction
+                if (selectedBundle.isWeekend()) {
+                    Calendar calendar = Calendar.getInstance();
+                    int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+                    if (dayOfWeek != Calendar.FRIDAY && dayOfWeek != Calendar.SATURDAY && dayOfWeek != Calendar.SUNDAY) {
+                        return "END Gwamon' Weekend is only available from Friday to Sunday";
+                    }
+                }
+                
+                // Show payment options
+                StringBuilder paymentMenu = new StringBuilder();
+                paymentMenu.append("CON Pay ").append(selectedBundle.getUssdDisplayFormat()).append(" via:\n");
+                paymentMenu.append("1. Airtime\n");
+                paymentMenu.append("2. MoMo\n");
+                paymentMenu.append("0. Go back");
+                
+                return paymentMenu.toString();
+            } else {
+                return "END Invalid selection. Please try again.";
+            }
+            
+        } catch (NumberFormatException e) {
+            return "END Invalid selection. Please try again.";
+        }
+    }
+
 
     /**
      * Handles payment method selection
@@ -190,6 +255,54 @@ public class UssdController {
             
         } catch (NumberFormatException e) {
             return new UssdResponse("Invalid selection. Please try again.", "END");
+        }
+    }
+
+    /**
+     * Handles payment method selection as plain text
+     */
+    private String handlePaymentSelectionText(String bundleSelection, String paymentSelection, String phoneNumber) {
+        try {
+            int bundleIndex = Integer.parseInt(bundleSelection);
+            int paymentMethod = Integer.parseInt(paymentSelection);
+            
+            if (paymentMethod == 0) {
+                return showMainMenuText();
+            }
+            
+            if (paymentMethod < 1 || paymentMethod > 2) {
+                return "END Invalid payment method. Please try again.";
+            }
+            
+            List<Bundle> bundles = bundleRepo.findByStatusOrderByIdDesc("Active");
+            if (bundleIndex < 1 || bundleIndex > bundles.size()) {
+                return "END Invalid bundle selection.";
+            }
+            
+            Bundle selectedBundle = bundles.get(bundleIndex - 1);
+            String paymentMethodName = paymentMethod == 1 ? "Airtime" : "MoMo";
+            
+            // Create purchase record
+            Purchase purchase = new Purchase();
+            purchase.setPhoneNumber(phoneNumber);
+            purchase.setPaymentMethod(paymentMethodName);
+            purchase.setStatus("completed");
+            purchase.setPurchaseDate(new Date());
+            purchase.setPurchaseId("PUR-" + System.currentTimeMillis());
+            purchase.setBundle(selectedBundle);
+            
+            purchaseRepo.save(purchase);
+            
+            String confirmation = String.format(
+                "END Purchase successful!\n%s purchased via %s.\nThank you for using MTN Gwamon!",
+                selectedBundle.getUssdDisplayFormat(),
+                paymentMethodName
+            );
+            
+            return confirmation;
+            
+        } catch (NumberFormatException e) {
+            return "END Invalid selection. Please try again.";
         }
     }
 
