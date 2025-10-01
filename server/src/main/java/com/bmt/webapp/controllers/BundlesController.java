@@ -41,7 +41,7 @@ import java.util.Optional;
  * - PUT /api/bundles/{id} - Update bundle
  * - DELETE /api/bundles/{id} - Delete bundle
  * - POST /api/bundles/purchase - Purchase a bundle
- * - GET /api/purchases - Get purchase history
+ * - GET /api/purchases - Get purchase histor
  */
 @RestController
 @RequestMapping("/api/bundles")
