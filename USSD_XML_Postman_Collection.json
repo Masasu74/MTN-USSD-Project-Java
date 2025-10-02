@@ -1,0 +1,246 @@
+{
+  "info": {
+    "name": "USSD XML Testing Collection",
+    "description": "Collection for testing USSD endpoints with both form-encoded and XML requests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "USSD - Form Request (Initial Menu)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "sessionId",
+              "value": "test_session_123",
+              "description": "Unique session identifier"
+            },
+            {
+              "key": "phoneNumber",
+              "value": "233241234567",
+              "description": "Customer phone number"
+            },
+            {
+              "key": "text",
+              "value": "",
+              "description": "User input (empty for initial request)"
+            },
+            {
+              "key": "serviceCode",
+              "value": "*154#",
+              "description": "USSD service code"
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8080/ussd",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["ussd"]
+        },
+        "description": "Form-encoded initial USSD request to show main menu"
+      }
+    },
+    {
+      "name": "USSD - XML Request (Initial Menu)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/xml"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<USSDRequest>\n  <sessionid>test_session_123</sessionid>\n  <msidn>233241234567</msidn>\n  <input></input>\n  <newrequest>true</newrequest>\n</USSDRequest>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/ussd",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["ussd"]
+        },
+        "description": "XML initial USSD request to show main menu"
+      }
+    },
+    {
+      "name": "USSD - Form Request (Select Bundle)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "sessionId",
+              "value": "test_session_123",
+              "description": "Same session ID"
+            },
+            {
+              "key": "phoneNumber",
+              "value": "233241234567",
+              "description": "Customer phone number"
+            },
+            {
+              "key": "text",
+              "value": "2",
+              "description": "User selected option 2"
+            },
+            {
+              "key": "serviceCode",
+              "value": "*154#",
+              "description": "USSD service code"
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8080/ussd",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["ussd"]
+        },
+        "description": "Form-encoded request to select bundle option 2"
+      }
+    },
+    {
+      "name": "USSD - XML Request (Select Bundle)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/xml"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<USSDRequest>\n  <sessionid>test_session_123</sessionid>\n  <msidn>233241234567</msidn>\n  <input>2</input>\n  <newrequest>false</newrequest>\n</USSDRequest>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/ussd",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["ussd"]
+        },
+        "description": "XML request to select bundle option 2"
+      }
+    },
+    {
+      "name": "USSD - Form Request (Complete Purchase)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "sessionId",
+              "value": "test_session_123",
+              "description": "Same session ID"
+            },
+            {
+              "key": "phoneNumber",
+              "value": "233241234567",
+              "description": "Customer phone number"
+            },
+            {
+              "key": "text",
+              "value": "2*1",
+              "description": "Bundle 2, Payment method 1 (Airtime)"
+            },
+            {
+              "key": "serviceCode",
+              "value": "*154#",
+              "description": "USSD service code"
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8080/ussd",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["ussd"]
+        },
+        "description": "Form-encoded request to complete purchase"
+      }
+    },
+    {
+      "name": "USSD - XML Request (Complete Purchase)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/xml"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<USSDRequest>\n  <sessionid>test_session_123</sessionid>\n  <msidn>233241234567</msidn>\n  <input>2*1</input>\n  <newrequest>false</newrequest>\n</USSDRequest>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/ussd",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["ussd"]
+        },
+        "description": "XML request to complete purchase"
+      }
+    },
+    {
+      "name": "USSD - Test Endpoint",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/ussd/test",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["ussd", "test"]
+        },
+        "description": "Test endpoint to verify server is running"
+      }
+    }
+  ]
+}

@@ -1,0 +1,159 @@
+{
+  "info": {
+    "name": "USSD Testing Collection",
+    "description": "Collection for testing USSD endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "USSD - Initial Menu",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "sessionId",
+              "value": "test_session_123",
+              "description": "Unique session identifier"
+            },
+            {
+              "key": "phoneNumber",
+              "value": "233241234567",
+              "description": "Customer phone number"
+            },
+            {
+              "key": "text",
+              "value": "",
+              "description": "User input (empty for initial request)"
+            },
+            {
+              "key": "serviceCode",
+              "value": "*154#",
+              "description": "USSD service code"
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8080/ussd",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["ussd"]
+        },
+        "description": "Initial USSD request to show main menu"
+      }
+    },
+    {
+      "name": "USSD - Select Bundle",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "sessionId",
+              "value": "test_session_123",
+              "description": "Same session ID"
+            },
+            {
+              "key": "phoneNumber",
+              "value": "233241234567",
+              "description": "Customer phone number"
+            },
+            {
+              "key": "text",
+              "value": "1",
+              "description": "User selected option 1"
+            },
+            {
+              "key": "serviceCode",
+              "value": "*154#",
+              "description": "USSD service code"
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8080/ussd",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["ussd"]
+        },
+        "description": "Select bundle option 1"
+      }
+    },
+    {
+      "name": "USSD - Select Payment Method",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "sessionId",
+              "value": "test_session_123",
+              "description": "Same session ID"
+            },
+            {
+              "key": "phoneNumber",
+              "value": "233241234567",
+              "description": "Customer phone number"
+            },
+            {
+              "key": "text",
+              "value": "1*1",
+              "description": "Bundle 1, Payment method 1 (Airtime)"
+            },
+            {
+              "key": "serviceCode",
+              "value": "*154#",
+              "description": "USSD service code"
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8080/ussd",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["ussd"]
+        },
+        "description": "Complete purchase with airtime payment"
+      }
+    },
+    {
+      "name": "USSD - Test Endpoint",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/ussd/test",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["ussd", "test"]
+        },
+        "description": "Test endpoint to verify server is running"
+      }
+    }
+  ]
+}
