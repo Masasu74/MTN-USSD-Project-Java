@@ -2,18 +2,21 @@ package com.bmt.webapp.controllers;
 
 import com.bmt.webapp.models.Bundle;
 import com.bmt.webapp.models.Purchase;
+import com.bmt.webapp.models.UssdSession;
 import com.bmt.webapp.repositories.BundleRepository;
 import com.bmt.webapp.repositories.PurchaseRepository;
+import com.bmt.webapp.repositories.UssdSessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.xml.bind.annotation.*;
+import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Optional;
 
 /**
  * UssdController - Handles USSD requests for MTN Gwamon Bundle system
@@ -44,8 +47,8 @@ public class UssdController {
     @Autowired
     private PurchaseRepository purchaseRepo;
     
-    // Session storage for USSD flow state
-    private Map<String, String> sessionStates = new ConcurrentHashMap<>();
+    @Autowired
+    private UssdSessionRepository sessionRepo;
 
     /**
      * POST /ussd - Main USSD endpoint
@@ -54,23 +57,29 @@ public class UssdController {
      * @param request USSD request containing session info and user input
      * @return USSD response with menu or confirmation
      */
-    @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.APPLICATION_XML_VALUE, MediaType.TEXT_XML_VALUE}, produces = MediaType.TEXT_PLAIN_VALUE)
-    public String handleUssdRequest(@RequestBody(required = false) UssdRequest request, @ModelAttribute UssdRequest formRequest) {
-        // Handle both XML and form requests
-        UssdRequest ussdRequest = request != null ? request : formRequest;
+    @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.APPLICATION_XML_VALUE}, produces = MediaType.TEXT_PLAIN_VALUE)
+    public String handleUssdRequest(@RequestParam(required = false) String sessionid,
+                                   @RequestParam(required = false) String msidn,
+                                   @RequestParam(required = false) String input,
+                                   @RequestBody(required = false) String xmlBody) {
         try {
-            String sessionId = ussdRequest.getSessionId();
-            String phoneNumber = ussdRequest.getPhoneNumber();
-            String text = ussdRequest.getText();
+            String sessionId = sessionid;
+            String phoneNumber = msidn;
+            String text = input;
+            
+            // Handle XML request if form data is null
+            if (sessionId == null && phoneNumber == null && text == null && xmlBody != null) {
+                sessionId = extractXmlValue(xmlBody, "sessionid");
+                phoneNumber = extractXmlValue(xmlBody, "msidn");
+                text = extractXmlValue(xmlBody, "input");
+            }
             
             System.out.println("USSD Request - Session: " + sessionId + ", Phone: " + phoneNumber + ", Text: " + text);
             
-            // Handle USSD flow without * separator
-            // Each request is a single selection
+            // Handle USSD flow with database session management
             if (text == null || text.isEmpty()) {
-                // Initial request - show main menu
-                sessionStates.put(sessionId, "main_menu");
-                return showMainMenuText();
+                // Initial request - create or get session and show main menu
+                return handleInitialRequest(sessionId, phoneNumber);
             } else {
                 // User made a selection - handle based on session state
                 return handleUserSelectionText(text, phoneNumber, sessionId);
@@ -170,11 +179,14 @@ public class UssdController {
     /**
      * Handles main menu selection as plain text
      */
-    private String handleMainMenuSelectionText(String selection, String phoneNumber, String sessionId) {
+    private String handleMainMenuSelectionText(String selection, String phoneNumber, UssdSession session) {
         try {
             int bundleIndex = Integer.parseInt(selection);
             
             if (bundleIndex == 0) {
+                // End session gracefully
+                session.deactivate();
+                sessionRepo.save(session);
                 return "END Thank you for using MTN Gwamon!";
             }
             
@@ -194,8 +206,9 @@ public class UssdController {
                 }
                 
                 // Store selected bundle in session and show payment options
-                sessionStates.put(sessionId, "payment_menu");
-                sessionStates.put(sessionId + "_bundle", String.valueOf(bundleIndex));
+                session.setCurrentState("payment_menu");
+                session.setSelectedBundleId((long) selectedBundle.getId());
+                sessionRepo.save(session);
                 
                 StringBuilder paymentMenu = new StringBuilder();
                 paymentMenu.append("CON Pay ").append(selectedBundle.getUssdDisplayFormat()).append(" via:\n");
@@ -263,34 +276,136 @@ public class UssdController {
     }
 
     /**
+     * Handles initial USSD request - creates or retrieves session
+     */
+    private String handleInitialRequest(String sessionId, String phoneNumber) {
+        try {
+            // Clean up expired sessions first
+            sessionRepo.deactivateExpiredSessions(LocalDateTime.now());
+            
+            // Check for existing active sessions for this phone number
+            List<UssdSession> existingSessions = sessionRepo.findActiveSessionsByPhoneNumber(phoneNumber);
+            if (!existingSessions.isEmpty()) {
+                // Deactivate any existing sessions for this phone number
+                for (UssdSession existingSession : existingSessions) {
+                    existingSession.deactivate();
+                    sessionRepo.save(existingSession);
+                }
+            }
+            
+            // Try to find existing session with this session ID
+            Optional<UssdSession> existingSession = sessionRepo.findActiveSessionBySessionId(sessionId);
+            
+            if (existingSession.isPresent()) {
+                UssdSession session = existingSession.get();
+                if (session.isExpired()) {
+                    // Session expired, deactivate old session and create new one
+                    session.deactivate();
+                    sessionRepo.save(session);
+                    System.out.println("Session " + sessionId + " was expired, creating new session for " + phoneNumber);
+                    return createNewSessionAndShowMenu(sessionId, phoneNumber);
+                } else {
+                    // Extend existing session and show menu
+                    session.extendSession();
+                    sessionRepo.save(session);
+                    return showMainMenuText();
+                }
+            } else {
+                // Create new session
+                return createNewSessionAndShowMenu(sessionId, phoneNumber);
+            }
+        } catch (Exception e) {
+            System.err.println("Error handling initial request: " + e.getMessage());
+            return "END Sorry, an error occurred. Please try again later.";
+        }
+    }
+    
+    /**
+     * Creates new session and shows main menu
+     */
+    private String createNewSessionAndShowMenu(String sessionId, String phoneNumber) {
+        UssdSession newSession = new UssdSession(sessionId, phoneNumber);
+        sessionRepo.save(newSession);
+        return showMainMenuText();
+    }
+    
+    /**
+     * Validates session and returns appropriate error message if invalid
+     */
+    private String validateSession(String sessionId, String phoneNumber) {
+        Optional<UssdSession> sessionOpt = sessionRepo.findActiveSessionBySessionId(sessionId);
+        
+        if (!sessionOpt.isPresent()) {
+            System.out.println("Session " + sessionId + " not found for phone " + phoneNumber);
+            return "END Your session has expired. Please dial *154# again to start a new session.";
+        }
+        
+        UssdSession session = sessionOpt.get();
+        if (session.isExpired()) {
+            System.out.println("Session " + sessionId + " expired for phone " + phoneNumber + " at " + session.getExpiresAt());
+            session.deactivate();
+            sessionRepo.save(session);
+            return "END Your session has expired due to inactivity. Please dial *154# again to start a new session.";
+        }
+        
+        return null; // Session is valid
+    }
+
+    /**
      * Handles user selection based on session state
      */
     private String handleUserSelectionText(String selection, String phoneNumber, String sessionId) {
-        String currentState = sessionStates.get(sessionId);
-        
-        if (currentState == null || "main_menu".equals(currentState)) {
-            // User is in main menu - handle bundle selection
-            return handleMainMenuSelectionText(selection, phoneNumber, sessionId);
-        } else if ("payment_menu".equals(currentState)) {
-            // User is in payment menu - handle payment selection
-            return handlePaymentSelectionText(selection, phoneNumber, sessionId);
-        } else {
-            // Unknown state - reset to main menu
-            sessionStates.put(sessionId, "main_menu");
-            return showMainMenuText();
+        try {
+            // Validate input
+            if (selection == null || selection.trim().isEmpty()) {
+                return "END Invalid input. Please try again.";
+            }
+            
+            // Validate session
+            String sessionError = validateSession(sessionId, phoneNumber);
+            if (sessionError != null) {
+                return sessionError;
+            }
+            
+            // Get session from database (we know it exists and is valid from validation above)
+            UssdSession session = sessionRepo.findActiveSessionBySessionId(sessionId).get();
+            
+            // Update session with new input
+            session.setLastInput(selection.trim());
+            session.extendSession();
+            sessionRepo.save(session);
+            
+            String currentState = session.getCurrentState();
+            
+            if (currentState == null || "main_menu".equals(currentState)) {
+                // User is in main menu - handle bundle selection
+                return handleMainMenuSelectionText(selection.trim(), phoneNumber, session);
+            } else if ("payment_menu".equals(currentState)) {
+                // User is in payment menu - handle payment selection
+                return handlePaymentSelectionText(selection.trim(), phoneNumber, session);
+            } else {
+                // Unknown state - reset to main menu
+                session.setCurrentState("main_menu");
+                sessionRepo.save(session);
+                return showMainMenuText();
+            }
+        } catch (Exception e) {
+            System.err.println("Error handling user selection: " + e.getMessage());
+            return "END Sorry, an error occurred. Please try again later.";
         }
     }
 
     /**
      * Handles payment method selection as plain text
      */
-    private String handlePaymentSelectionText(String paymentSelection, String phoneNumber, String sessionId) {
+    private String handlePaymentSelectionText(String paymentSelection, String phoneNumber, UssdSession session) {
         try {
             int paymentMethod = Integer.parseInt(paymentSelection);
             
             if (paymentMethod == 0) {
                 // Go back to main menu
-                sessionStates.put(sessionId, "main_menu");
+                session.setCurrentState("main_menu");
+                sessionRepo.save(session);
                 return showMainMenuText();
             }
             
@@ -299,18 +414,17 @@ public class UssdController {
             }
             
             // Get selected bundle from session
-            String bundleSelectionStr = sessionStates.get(sessionId + "_bundle");
-            if (bundleSelectionStr == null) {
-                return "END Session expired. Please start again.";
+            Long selectedBundleId = session.getSelectedBundleId();
+            if (selectedBundleId == null) {
+                return "END Your session has expired. Please dial *154# again to start a new session.";
             }
             
-            int bundleIndex = Integer.parseInt(bundleSelectionStr);
-            List<Bundle> bundles = bundleRepo.findByStatusOrderByIdDesc("Active");
-            if (bundleIndex < 1 || bundleIndex > bundles.size()) {
-                return "END Invalid bundle selection.";
+            Optional<Bundle> bundleOpt = bundleRepo.findById(selectedBundleId.intValue());
+            if (!bundleOpt.isPresent()) {
+                return "END Bundle not found. Please dial *154# again to start a new session.";
             }
             
-            Bundle selectedBundle = bundles.get(bundleIndex - 1);
+            Bundle selectedBundle = bundleOpt.get();
             String paymentMethodName = paymentMethod == 1 ? "Airtime" : "MoMo";
             
             // Create purchase record
@@ -325,8 +439,8 @@ public class UssdController {
             purchaseRepo.save(purchase);
             
             // Clean up session
-            sessionStates.remove(sessionId);
-            sessionStates.remove(sessionId + "_bundle");
+            session.deactivate();
+            sessionRepo.save(session);
             
             String confirmation = String.format(
                 "END Purchase successful!\n%s purchased via %s.\nThank you for using MTN Gwamon!",
@@ -392,12 +506,10 @@ public class UssdController {
             
             System.out.println("XML USSD Request - Session: " + sessionId + ", Phone: " + phoneNumber + ", Text: " + text);
             
-            // Handle USSD flow without * separator
-            // Each request is a single selection
+            // Handle USSD flow with database session management
             if (text == null || text.isEmpty()) {
-                // Initial request - show main menu
-                sessionStates.put(sessionId, "main_menu");
-                return showMainMenuText();
+                // Initial request - create or get session and show main menu
+                return handleInitialRequest(sessionId, phoneNumber);
             } else {
                 // User made a selection - handle based on session state
                 return handleUserSelectionText(text, phoneNumber, sessionId);
@@ -424,6 +536,27 @@ public class UssdController {
             return xml.substring(startIndex, endIndex).trim();
         } catch (Exception e) {
             return "";
+        }
+    }
+
+    /**
+     * Scheduled task to clean up old sessions every 5 minutes
+     */
+    @Scheduled(fixedRate = 300000) // 5 minutes
+    public void cleanupOldSessions() {
+        try {
+            // Deactivate expired sessions
+            int expiredCount = sessionRepo.deactivateExpiredSessions(LocalDateTime.now());
+            
+            // Delete sessions older than 24 hours
+            LocalDateTime cutoffTime = LocalDateTime.now().minusHours(24);
+            int deletedCount = sessionRepo.deleteOldSessions(cutoffTime);
+            
+            if (expiredCount > 0 || deletedCount > 0) {
+                System.out.println("Session cleanup: " + expiredCount + " expired, " + deletedCount + " deleted");
+            }
+        } catch (Exception e) {
+            System.err.println("Error during session cleanup: " + e.getMessage());
         }
     }
 

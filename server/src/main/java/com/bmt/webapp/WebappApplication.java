@@ -2,6 +2,7 @@ package com.bmt.webapp;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * MTN Gwamon Bundle USSD Application
@@ -28,6 +29,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * - GET /api/bundles/purchases - Get purchase history
  */
 @SpringBootApplication
+@EnableScheduling
 public class WebappApplication {
 
 	public static void main(String[] args) {
