@@ -21,3 +21,4 @@ ALTER TABLE ussd_sessions
 ADD CONSTRAINT fk_ussd_session_bundle 
 FOREIGN KEY (selected_bundle_id) REFERENCES bundles(id);
 
+
