@@ -8,7 +8,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Bundle Entity - Represents MTN Gwamon Bundle offerings
+ * Bundle Entity - Represents MTN YOLO USSD offerings
  * This entity stores bundle information for the USSD application
  * Can be accessed via Frontend, Postman, or USSD code like *154#
  */

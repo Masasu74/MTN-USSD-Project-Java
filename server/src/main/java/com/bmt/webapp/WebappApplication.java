@@ -5,9 +5,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
- * MTN Gwamon Bundle USSD Application
+ * MTN YOLO USSD Application
  * 
- * This is the main Spring Boot application for the MTN Gwamon Bundle system.
+ * This is the main Spring Boot application for the MTN YOLO USSD system.
  * 
  * Features:
  * - Bundle management (CRUD operations)
@@ -34,7 +34,7 @@ public class WebappApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(WebappApplication.class, args);
-		System.out.println("MTN Gwamon Bundle USSD Application started successfully!");
+		System.out.println("MTN YOLO USSD Application started successfully!");
 		System.out.println("Access the API at: http://localhost:8080/api/bundles");
 		System.out.println("Frontend should connect to: http://localhost:8080");
 	}

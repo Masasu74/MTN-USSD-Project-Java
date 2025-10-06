@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * BundlesController - REST API Controller for MTN Gwamon Bundle Management
+ * BundlesController - REST API Controller for MTN YOLO USSD Management
  * 
  * This controller handles all bundle operations for the USSD application:
  * - Bundle CRUD operations (Create, Read, Update, Delete)
@@ -82,7 +82,7 @@ public class BundlesController {
 
     /**
      * POST /api/bundles - Create new bundle
-     * Creates a new MTN Gwamon bundle with the provided details
+     * Creates a new MTN YOLO USSD bundle with the provided details
      * Used by admin interface for adding new bundle offerings
      */
     @PostMapping

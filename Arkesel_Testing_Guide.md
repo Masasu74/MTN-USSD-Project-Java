@@ -12,7 +12,7 @@
 2. **Fill in the configuration**:
 
 #### Basic Configuration:
-- **Service Name**: `MTN Gwamon Bundles`
+- **Service Name**: `MTN YOLO USSD`
 - **USSD Code**: `*154#`
 - **Endpoint URL**: `https://9838e5d79eaf.ngrok-free.app/ussd`
 - **HTTP Method**: `POST`
@@ -43,7 +43,7 @@ serviceCode: *154#
 **Expected Response:**
 ```json
 {
-  "message": "MTN Gwamon Bundles\nValid till Sunday 23:59\n\n1) Gwamon' Weekend\n2) 500FRW=0MB+700Mins+30SMS\n3) 1000FRW=7GB+30SMS\n4) 1500FRW=8GB+800Mins+30SMS\n0) Go back",
+  "message": "MTN YOLO USSD\nValid till Sunday 23:59\n\n1) Gwamon' Weekend\n2) 500FRW=0MB+700Mins+30SMS\n3) 1000FRW=7GB+30SMS\n4) 1500FRW=8GB+800Mins+30SMS\n0) Go back",
   "sessionState": "CON"
 }
 ```
@@ -77,7 +77,7 @@ serviceCode: *154#
 **Expected Response:**
 ```json
 {
-  "message": "Purchase successful!\nGwamon' Weekend purchased via Airtime.\nThank you for using MTN Gwamon!",
+  "message": "Purchase successful!\nGwamon' Weekend purchased via Airtime.\nThank you for using MTN YOLO USSD!",
   "sessionState": "END"
 }
 ```
@@ -169,7 +169,7 @@ sessionId=test_session_123&phoneNumber=233241234567&text=&serviceCode=*154#
 ```
 *154# → Send
 ↓
-MTN Gwamon Bundles
+MTN YOLO USSD
 Valid till Sunday 23:59
 
 1) Gwamon' Weekend
@@ -189,7 +189,7 @@ Pay Gwamon' Weekend via:
 ↓
 Purchase successful!
 Gwamon' Weekend purchased via Airtime.
-Thank you for using MTN Gwamon!
+Thank you for using MTN YOLO USSD!
 ```
 
 ## 🔗 Useful Links

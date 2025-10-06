@@ -13,7 +13,7 @@ sessionId=test123&phoneNumber=0788317222&text=&serviceCode=*154#
 **Expected Response:**
 ```json
 {
-  "message": "MTN Gwamon Bundles\nValid till Sunday 23:59\n\n1) Gwamon' Weekend\n2) 500FRW=0MB+700Mins+30SMS\n3) 1000FRW=7GB+30SMS\n4) 1500FRW=8GB+800Mins+30SMS\n0) Go back",
+  "message": "MTN YOLO USSD\nValid till Sunday 23:59\n\n1) Gwamon' Weekend\n2) 500FRW=0MB+700Mins+30SMS\n3) 1000FRW=7GB+30SMS\n4) 1500FRW=8GB+800Mins+30SMS\n0) Go back",
   "sessionState": "CON"
 }
 ```
@@ -45,7 +45,7 @@ sessionId=test123&phoneNumber=0788317222&text=1*1&serviceCode=*154#
 **Expected Response:**
 ```json
 {
-  "message": "Purchase successful!\nGwamon' Weekend purchased via Airtime.\nThank you for using MTN Gwamon!",
+  "message": "Purchase successful!\nGwamon' Weekend purchased via Airtime.\nThank you for using MTN YOLO USSD!",
   "sessionState": "END"
 }
 ```

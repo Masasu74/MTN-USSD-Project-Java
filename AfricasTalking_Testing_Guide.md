@@ -78,7 +78,7 @@ sessionId=ATUid_1234567890abcdef&phoneNumber=+254700000000&text=&serviceCode=*38
 ```
 *384*1300# → Send
 ↓
-MTN Gwamon Bundles
+MTN YOLO USSD
 Valid till Sunday 23:59
 
 1) Gwamon' Weekend
@@ -98,7 +98,7 @@ Pay Gwamon' Weekend via:
 ↓
 Purchase successful!
 Gwamon' Weekend purchased via Airtime.
-Thank you for using MTN Gwamon!
+Thank you for using MTN YOLO USSD!
 ```
 
 ## 🔍 Monitoring and Debugging
