@@ -155,19 +155,19 @@ public class UssdController {
             } else if (optionIndex == 1) {
                 return showYoloVoice();
             } else if (optionIndex == 2) {
-                return new UssdResponse("YOLO Internet - Coming soon!", "END");
+                return showYoloInternet();
             } else if (optionIndex == 3) {
-                return new UssdResponse("Other Bundles - Coming soon!", "END");
+                return showOtherBundles();
             } else if (optionIndex == 4) {
-                return new UssdResponse("DesaDe - Coming soon!", "END");
+                return showDesaDe();
             } else if (optionIndex == 5) {
                 return new UssdResponse("Balance check - Coming soon!", "END");
             } else if (optionIndex == 6) {
-                return new UssdResponse("FoLeva - Coming soon!", "END");
+                return showFoLeva();
             } else if (optionIndex == 7) {
-                return new UssdResponse("Ihereze - Coming soon!", "END");
+                return showIhereze();
             } else if (optionIndex == 8) {
-                return new UssdResponse("YOLO Star - Coming soon!", "END");
+                return showYoloStar();
             } else {
                 return new UssdResponse("Invalid selection. Please try again.", "END");
             }
@@ -223,6 +223,105 @@ public class UssdController {
     }
 
     /**
+     * Shows Other Bundles menu
+     */
+    private UssdResponse showOtherBundles() {
+        StringBuilder menu = new StringBuilder();
+        menu.append("Other Bundles\n");
+        menu.append("Choose an option:\n\n");
+        menu.append("1) 100Frw=100MB/24hrs\n");
+        menu.append("2) 500Frw=500MB/7Days\n");
+        menu.append("3) 1000Frw=800MB/30Days\n");
+        menu.append("4) DesaDe\n");
+        menu.append("0) Go back");
+        
+        return new UssdResponse(menu.toString(), "CON");
+    }
+
+    /**
+     * Shows DesaDe menu
+     */
+    private UssdResponse showDesaDe() {
+        StringBuilder menu = new StringBuilder();
+        menu.append("DesaDe\n");
+        menu.append("Valid till the second day at 23:59\n\n");
+        menu.append("1) 200Frw=200Mins+200SMS/2 Days\n");
+        menu.append("2) 200Frw=200MBs+200SMS/2Days\n");
+        menu.append("3) 200Frw=100Mins+100MBs/2Days\n");
+        menu.append("0) Go back");
+        
+        return new UssdResponse(menu.toString(), "CON");
+    }
+
+    /**
+     * Shows FoLeva menu
+     */
+    private UssdResponse showFoLeva() {
+        StringBuilder menu = new StringBuilder();
+        menu.append("FoLeva Bundles\n");
+        menu.append("Valid until the last MB\n\n");
+        menu.append("1) 5000Frw=10GB+1000Mins\n");
+        menu.append("2) 10000Frw=25GB+2500Mins\n");
+        menu.append("3) 20000Frw=75GB+3000 Mins\n");
+        menu.append("0) Go back");
+        
+        return new UssdResponse(menu.toString(), "CON");
+    }
+
+    /**
+     * Shows YOLO Internet menu
+     */
+    private UssdResponse showYoloInternet() {
+        StringBuilder menu = new StringBuilder();
+        menu.append("YOLO Internet\n");
+        menu.append("Choose an option:\n\n");
+        menu.append("1) Daily(24hrs)\n");
+        menu.append("2) Weekly (7Days)\n");
+        menu.append("3) Monthly(30Days)\n");
+        menu.append("4) DesaDe\n");
+        menu.append("5) Hourly\n");
+        menu.append("6) Social Media Bundles(24hrs)\n");
+        menu.append("0) Go back");
+        
+        return new UssdResponse(menu.toString(), "CON");
+    }
+
+    /**
+     * Shows Ihereze menu
+     */
+    private UssdResponse showIhereze() {
+        StringBuilder menu = new StringBuilder();
+        menu.append("Get loan 200Frw on Ihereze:\n\n");
+        menu.append("1. 200Frw\n");
+        menu.append("2. Airtime\n");
+        menu.append("3. Gwamon'\n");
+        menu.append("4. Voice + Internet\n");
+        menu.append("5. Tira4Me\n");
+        menu.append("1. Loan Statement\n");
+        menu.append("2. Outstanding Loan\n");
+        menu.append("0) Go back");
+        
+        return new UssdResponse(menu.toString(), "CON");
+    }
+
+    /**
+     * Shows YOLO Star menu
+     */
+    private UssdResponse showYoloStar() {
+        StringBuilder menu = new StringBuilder();
+        menu.append("YOLO Star\n");
+        menu.append("Choose an option:\n\n");
+        menu.append("1. Join YOLO Star\n");
+        menu.append("2. My YOLO Star Account\n");
+        menu.append("3. YOLO Star Partners\n");
+        menu.append("4. Redeem Loyalty Points\n");
+        menu.append("5. Other info\n");
+        menu.append("0) Go back");
+        
+        return new UssdResponse(menu.toString(), "CON");
+    }
+
+    /**
      * Shows Gwamon bundles menu
      */
     private UssdResponse showGwamonBundles() {
@@ -271,19 +370,31 @@ public class UssdController {
                 sessionRepo.save(session);
                 return showYoloVoiceText();
             } else if (optionIndex == 2) {
-                return "END YOLO Internet - Coming soon!";
+                session.setCurrentState("yolo_internet");
+                sessionRepo.save(session);
+                return showYoloInternetText();
             } else if (optionIndex == 3) {
-                return "END Other Bundles - Coming soon!";
+                session.setCurrentState("other_bundles");
+                sessionRepo.save(session);
+                return showOtherBundlesText();
             } else if (optionIndex == 4) {
-                return "END DesaDe - Coming soon!";
+                session.setCurrentState("desade");
+                sessionRepo.save(session);
+                return showDesaDeText();
             } else if (optionIndex == 5) {
                 return "END Balance check - Coming soon!";
             } else if (optionIndex == 6) {
-                return "END FoLeva - Coming soon!";
+                session.setCurrentState("foleva");
+                sessionRepo.save(session);
+                return showFoLevaText();
             } else if (optionIndex == 7) {
-                return "END Ihereze - Coming soon!";
+                session.setCurrentState("ihereze");
+                sessionRepo.save(session);
+                return showIherezeText();
             } else if (optionIndex == 8) {
-                return "END YOLO Star - Coming soon!";
+                session.setCurrentState("yolo_star");
+                sessionRepo.save(session);
+                return showYoloStarText();
             } else {
                 return "END Invalid selection. Please try again.";
             }
@@ -334,6 +445,169 @@ public class UssdController {
         menu.append("3) 500Frw=800Mins+20SMS/7Days\n");
         menu.append("4) 1000Frw=(120 Mins+1GB) per day /7days\n");
         menu.append("n) Next\n");
+        menu.append("0) Go back");
+        
+        return menu.toString();
+    }
+
+    /**
+     * Shows Other Bundles menu as plain text
+     */
+    private String showOtherBundlesText() {
+        StringBuilder menu = new StringBuilder();
+        menu.append("CON Other Bundles\n");
+        menu.append("Choose an option:\n\n");
+        menu.append("1) 100Frw=100MB/24hrs\n");
+        menu.append("2) 500Frw=500MB/7Days\n");
+        menu.append("3) 1000Frw=800MB/30Days\n");
+        menu.append("4) DesaDe\n");
+        menu.append("0) Go back");
+        
+        return menu.toString();
+    }
+
+    /**
+     * Shows DesaDe menu as plain text
+     */
+    private String showDesaDeText() {
+        StringBuilder menu = new StringBuilder();
+        menu.append("CON DesaDe\n");
+        menu.append("Valid till the second day at 23:59\n\n");
+        menu.append("1) 200Frw=200Mins+200SMS/2 Days\n");
+        menu.append("2) 200Frw=200MBs+200SMS/2Days\n");
+        menu.append("3) 200Frw=100Mins+100MBs/2Days\n");
+        menu.append("0) Go back");
+        
+        return menu.toString();
+    }
+
+    /**
+     * Shows FoLeva menu as plain text
+     */
+    private String showFoLevaText() {
+        StringBuilder menu = new StringBuilder();
+        menu.append("CON FoLeva Bundles\n");
+        menu.append("Valid until the last MB\n\n");
+        menu.append("1) 5000Frw=10GB+1000Mins\n");
+        menu.append("2) 10000Frw=25GB+2500Mins\n");
+        menu.append("3) 20000Frw=75GB+3000 Mins\n");
+        menu.append("0) Go back");
+        
+        return menu.toString();
+    }
+
+    /**
+     * Shows YOLO Internet menu as plain text
+     */
+    private String showYoloInternetText() {
+        StringBuilder menu = new StringBuilder();
+        menu.append("CON YOLO Internet\n");
+        menu.append("Choose an option:\n\n");
+        menu.append("1) Daily(24hrs)\n");
+        menu.append("2) Weekly (7Days)\n");
+        menu.append("3) Monthly(30Days)\n");
+        menu.append("4) DesaDe\n");
+        menu.append("5) Hourly\n");
+        menu.append("6) Social Media Bundles(24hrs)\n");
+        menu.append("0) Go back");
+        
+        return menu.toString();
+    }
+
+    /**
+     * Shows YOLO Internet Daily bundles as plain text
+     */
+    private String showYoloInternetDailyText() {
+        StringBuilder menu = new StringBuilder();
+        menu.append("CON Daily(24hrs)\n");
+        menu.append("Choose an option:\n\n");
+        menu.append("1) 100Frw=100MB\n");
+        menu.append("2) 200Frw=420MB+30SMS\n");
+        menu.append("1. 500Frw = 1536MB\n");
+        menu.append("2. Triple Data Promo\n");
+        menu.append("0) Go back");
+        
+        return menu.toString();
+    }
+
+    /**
+     * Shows YOLO Internet Weekly bundles as plain text
+     */
+    private String showYoloInternetWeeklyText() {
+        StringBuilder menu = new StringBuilder();
+        menu.append("CON Weekly (7Days)\n");
+        menu.append("Choose an option:\n\n");
+        menu.append("1. 500Frw= 1024MB+30SMS+ 30Mins(Night bonus) /Icyumweru\n");
+        menu.append("2. 1000Frw=(120Mins+1GB) ku munsi /iminsi 7\n");
+        menu.append("3) 1000Frw=30GB/Monthly(1GB/Day+100Mins/Day)\n");
+        menu.append("n) Next\n");
+        menu.append("0) Go back");
+        
+        return menu.toString();
+    }
+
+    /**
+     * Shows YOLO Internet Monthly bundles as plain text
+     */
+    private String showYoloInternetMonthlyText() {
+        StringBuilder menu = new StringBuilder();
+        menu.append("CON Monthly(30Days)\n");
+        menu.append("Choose an option:\n\n");
+        menu.append("1. 500Frw= 1024MB+30SMS+ 30Mins(Night bonus) /Icyumweru\n");
+        menu.append("2. 1000Frw=(120Mins+1GB) ku munsi /iminsi 7\n");
+        menu.append("3) 1000Frw=30GB/Monthly(1GB/Day+100Mins/Day)\n");
+        menu.append("n) Next\n");
+        menu.append("0) Go back");
+        
+        return menu.toString();
+    }
+
+    /**
+     * Shows YOLO Internet Hourly bundles as plain text
+     */
+    private String showYoloInternetHourlyText() {
+        StringBuilder menu = new StringBuilder();
+        menu.append("CON Hourly\n");
+        menu.append("Choose an option:\n\n");
+        menu.append("1. 500Frw= 1024MB+30SMS+ 30Mins(Night bonus) /Icyumweru\n");
+        menu.append("2. 1000Frw=(120Mins+1GB) ku munsi /iminsi 7\n");
+        menu.append("3) 1000Frw=30GB/Monthly(1GB/Day+100Mins/Day)\n");
+        menu.append("n) Next\n");
+        menu.append("0) Go back");
+        
+        return menu.toString();
+    }
+
+    /**
+     * Shows Ihereze menu as plain text
+     */
+    private String showIherezeText() {
+        StringBuilder menu = new StringBuilder();
+        menu.append("CON Get loan 200Frw on Ihereze:\n\n");
+        menu.append("1. 200Frw\n");
+        menu.append("2. Airtime\n");
+        menu.append("3. Gwamon'\n");
+        menu.append("4. Voice + Internet\n");
+        menu.append("5. Tira4Me\n");
+        menu.append("1. Loan Statement\n");
+        menu.append("2. Outstanding Loan\n");
+        menu.append("0) Go back");
+        
+        return menu.toString();
+    }
+
+    /**
+     * Shows YOLO Star menu as plain text
+     */
+    private String showYoloStarText() {
+        StringBuilder menu = new StringBuilder();
+        menu.append("CON YOLO Star\n");
+        menu.append("Choose an option:\n\n");
+        menu.append("1. Join YOLO Star\n");
+        menu.append("2. My YOLO Star Account\n");
+        menu.append("3. YOLO Star Partners\n");
+        menu.append("4. Redeem Loyalty Points\n");
+        menu.append("5. Other info\n");
         menu.append("0) Go back");
         
         return menu.toString();
@@ -494,7 +768,372 @@ public class UssdController {
                 sessionRepo.save(session);
                 return showPaymentMenuText();
             } else if (optionIndex == 6) {
-                return "END DesaDe - Coming soon!";
+                // Navigate to DesaDe menu
+                session.setCurrentState("desade");
+                sessionRepo.save(session);
+                return showDesaDeText();
+            } else {
+                return "END Invalid selection. Please try again.";
+            }
+            
+        } catch (NumberFormatException e) {
+            return "END Invalid selection. Please try again.";
+        }
+    }
+
+    /**
+     * Handles Other Bundles selection
+     */
+    private String handleOtherBundlesSelectionText(String selection, String phoneNumber, UssdSession session) {
+        try {
+            int optionIndex = Integer.parseInt(selection);
+            
+            if (optionIndex == 0) {
+                // Go back to main YOLO menu
+                session.setCurrentState("main_menu");
+                sessionRepo.save(session);
+                return showMainMenuText();
+            } else if (optionIndex == 1) {
+                // Store bundle selection and show payment options
+                session.setSelectedBundleId(20L); // 100Frw other bundle
+                session.setCurrentState("payment_menu");
+                session.setLastInput("other_bundles"); // Remember we came from Other Bundles
+                sessionRepo.save(session);
+                return showPaymentMenuText();
+            } else if (optionIndex == 2) {
+                // Store bundle selection and show payment options
+                session.setSelectedBundleId(21L); // 500Frw other bundle
+                session.setCurrentState("payment_menu");
+                session.setLastInput("other_bundles"); // Remember we came from Other Bundles
+                sessionRepo.save(session);
+                return showPaymentMenuText();
+            } else if (optionIndex == 3) {
+                // Store bundle selection and show payment options
+                session.setSelectedBundleId(22L); // 1000Frw other bundle
+                session.setCurrentState("payment_menu");
+                session.setLastInput("other_bundles"); // Remember we came from Other Bundles
+                sessionRepo.save(session);
+                return showPaymentMenuText();
+            } else if (optionIndex == 4) {
+                // Navigate to DesaDe menu
+                session.setCurrentState("desade");
+                sessionRepo.save(session);
+                return showDesaDeText();
+            } else {
+                return "END Invalid selection. Please try again.";
+            }
+            
+        } catch (NumberFormatException e) {
+            return "END Invalid selection. Please try again.";
+        }
+    }
+
+    /**
+     * Handles DesaDe selection
+     */
+    private String handleDesaDeSelectionText(String selection, String phoneNumber, UssdSession session) {
+        try {
+            int optionIndex = Integer.parseInt(selection);
+            
+            if (optionIndex == 0) {
+                // Go back to main YOLO menu
+                session.setCurrentState("main_menu");
+                sessionRepo.save(session);
+                return showMainMenuText();
+            } else if (optionIndex == 1) {
+                // Store bundle selection and show payment options
+                session.setSelectedBundleId(30L); // 200Frw DesaDe bundle 1
+                session.setCurrentState("payment_menu");
+                session.setLastInput("desade"); // Remember we came from DesaDe
+                sessionRepo.save(session);
+                return showPaymentMenuText();
+            } else if (optionIndex == 2) {
+                // Store bundle selection and show payment options
+                session.setSelectedBundleId(31L); // 200Frw DesaDe bundle 2
+                session.setCurrentState("payment_menu");
+                session.setLastInput("desade"); // Remember we came from DesaDe
+                sessionRepo.save(session);
+                return showPaymentMenuText();
+            } else if (optionIndex == 3) {
+                // Store bundle selection and show payment options
+                session.setSelectedBundleId(32L); // 200Frw DesaDe bundle 3
+                session.setCurrentState("payment_menu");
+                session.setLastInput("desade"); // Remember we came from DesaDe
+                sessionRepo.save(session);
+                return showPaymentMenuText();
+            } else {
+                return "END Invalid selection. Please try again.";
+            }
+            
+        } catch (NumberFormatException e) {
+            return "END Invalid selection. Please try again.";
+        }
+    }
+
+    /**
+     * Handles FoLeva selection
+     */
+    private String handleFoLevaSelectionText(String selection, String phoneNumber, UssdSession session) {
+        try {
+            int optionIndex = Integer.parseInt(selection);
+            
+            if (optionIndex == 0) {
+                // Go back to main YOLO menu
+                session.setCurrentState("main_menu");
+                sessionRepo.save(session);
+                return showMainMenuText();
+            } else if (optionIndex == 1) {
+                // Store bundle selection and show payment options
+                session.setSelectedBundleId(40L); // 5000Frw FoLeva bundle
+                session.setCurrentState("payment_menu");
+                session.setLastInput("foleva"); // Remember we came from FoLeva
+                sessionRepo.save(session);
+                return showPaymentMenuText();
+            } else if (optionIndex == 2) {
+                // Store bundle selection and show payment options
+                session.setSelectedBundleId(41L); // 10000Frw FoLeva bundle
+                session.setCurrentState("payment_menu");
+                session.setLastInput("foleva"); // Remember we came from FoLeva
+                sessionRepo.save(session);
+                return showPaymentMenuText();
+            } else if (optionIndex == 3) {
+                // Store bundle selection and show payment options
+                session.setSelectedBundleId(42L); // 20000Frw FoLeva bundle
+                session.setCurrentState("payment_menu");
+                session.setLastInput("foleva"); // Remember we came from FoLeva
+                sessionRepo.save(session);
+                return showPaymentMenuText();
+            } else {
+                return "END Invalid selection. Please try again.";
+            }
+            
+        } catch (NumberFormatException e) {
+            return "END Invalid selection. Please try again.";
+        }
+    }
+
+    /**
+     * Handles YOLO Internet main menu selection
+     */
+    private String handleYoloInternetSelectionText(String selection, String phoneNumber, UssdSession session) {
+        try {
+            int optionIndex = Integer.parseInt(selection);
+            
+            if (optionIndex == 0) {
+                // Go back to main YOLO menu
+                session.setCurrentState("main_menu");
+                sessionRepo.save(session);
+                return showMainMenuText();
+            } else if (optionIndex == 1) {
+                // Navigate to Daily bundles
+                session.setCurrentState("yolo_internet_daily");
+                sessionRepo.save(session);
+                return showYoloInternetDailyText();
+            } else if (optionIndex == 2) {
+                // Navigate to Weekly bundles
+                session.setCurrentState("yolo_internet_weekly");
+                sessionRepo.save(session);
+                return showYoloInternetWeeklyText();
+            } else if (optionIndex == 3) {
+                // Navigate to Monthly bundles
+                session.setCurrentState("yolo_internet_monthly");
+                sessionRepo.save(session);
+                return showYoloInternetMonthlyText();
+            } else if (optionIndex == 4) {
+                // Navigate to DesaDe menu
+                session.setCurrentState("desade");
+                sessionRepo.save(session);
+                return showDesaDeText();
+            } else if (optionIndex == 5) {
+                // Navigate to Hourly bundles
+                session.setCurrentState("yolo_internet_hourly");
+                sessionRepo.save(session);
+                return showYoloInternetHourlyText();
+            } else if (optionIndex == 6) {
+                return "END Social Media Bundles - Coming soon!";
+            } else {
+                return "END Invalid selection. Please try again.";
+            }
+            
+        } catch (NumberFormatException e) {
+            return "END Invalid selection. Please try again.";
+        }
+    }
+
+    /**
+     * Handles YOLO Internet Daily bundles selection
+     */
+    private String handleYoloInternetDailySelectionText(String selection, String phoneNumber, UssdSession session) {
+        try {
+            int optionIndex = Integer.parseInt(selection);
+            
+            if (optionIndex == 0) {
+                // Go back to YOLO Internet menu
+                session.setCurrentState("yolo_internet");
+                sessionRepo.save(session);
+                return showYoloInternetText();
+            } else if (optionIndex == 1) {
+                return "END 100Frw=100MB - Coming soon!";
+            } else if (optionIndex == 2) {
+                return "END 200Frw=420MB+30SMS - Coming soon!";
+            } else {
+                return "END Invalid selection. Please try again!";
+            }
+            
+        } catch (NumberFormatException e) {
+            return "END Invalid selection. Please try again.";
+        }
+    }
+
+    /**
+     * Handles YOLO Internet Weekly bundles selection
+     */
+    private String handleYoloInternetWeeklySelectionText(String selection, String phoneNumber, UssdSession session) {
+        try {
+            // Handle special text inputs first
+            if ("n".equalsIgnoreCase(selection) || "next".equalsIgnoreCase(selection)) {
+                return "END Next page - Coming soon!";
+            }
+            
+            int optionIndex = Integer.parseInt(selection);
+            
+            if (optionIndex == 0) {
+                // Go back to YOLO Internet menu
+                session.setCurrentState("yolo_internet");
+                sessionRepo.save(session);
+                return showYoloInternetText();
+            } else if (optionIndex == 1) {
+                return "END 500Frw= 1024MB+30SMS+ 30Mins(Night bonus) /Icyumweru - Coming soon!";
+            } else if (optionIndex == 2) {
+                return "END 1000Frw=(120Mins+1GB) ku munsi /iminsi 7 - Coming soon!";
+            } else if (optionIndex == 3) {
+                return "END 1000Frw=30GB/Monthly(1GB/Day+100Mins/Day) - Coming soon!";
+            } else {
+                return "END Invalid selection. Please try again.";
+            }
+            
+        } catch (NumberFormatException e) {
+            return "END Invalid selection. Please try again.";
+        }
+    }
+
+    /**
+     * Handles YOLO Internet Monthly bundles selection
+     */
+    private String handleYoloInternetMonthlySelectionText(String selection, String phoneNumber, UssdSession session) {
+        try {
+            // Handle special text inputs first
+            if ("n".equalsIgnoreCase(selection) || "next".equalsIgnoreCase(selection)) {
+                return "END Next page - Coming soon!";
+            }
+            
+            int optionIndex = Integer.parseInt(selection);
+            
+            if (optionIndex == 0) {
+                // Go back to YOLO Internet menu
+                session.setCurrentState("yolo_internet");
+                sessionRepo.save(session);
+                return showYoloInternetText();
+            } else if (optionIndex == 1) {
+                return "END 500Frw= 1024MB+30SMS+ 30Mins(Night bonus) /Icyumweru - Coming soon!";
+            } else if (optionIndex == 2) {
+                return "END 1000Frw=(120Mins+1GB) ku munsi /iminsi 7 - Coming soon!";
+            } else if (optionIndex == 3) {
+                return "END 1000Frw=30GB/Monthly(1GB/Day+100Mins/Day) - Coming soon!";
+            } else {
+                return "END Invalid selection. Please try again.";
+            }
+            
+        } catch (NumberFormatException e) {
+            return "END Invalid selection. Please try again.";
+        }
+    }
+
+    /**
+     * Handles YOLO Internet Hourly bundles selection
+     */
+    private String handleYoloInternetHourlySelectionText(String selection, String phoneNumber, UssdSession session) {
+        try {
+            // Handle special text inputs first
+            if ("n".equalsIgnoreCase(selection) || "next".equalsIgnoreCase(selection)) {
+                return "END Next page - Coming soon!";
+            }
+            
+            int optionIndex = Integer.parseInt(selection);
+            
+            if (optionIndex == 0) {
+                // Go back to YOLO Internet menu
+                session.setCurrentState("yolo_internet");
+                sessionRepo.save(session);
+                return showYoloInternetText();
+            } else if (optionIndex == 1) {
+                return "END 500Frw= 1024MB+30SMS+ 30Mins(Night bonus) /Icyumweru - Coming soon!";
+            } else if (optionIndex == 2) {
+                return "END 1000Frw=(120Mins+1GB) ku munsi /iminsi 7 - Coming soon!";
+            } else if (optionIndex == 3) {
+                return "END 1000Frw=30GB/Monthly(1GB/Day+100Mins/Day) - Coming soon!";
+            } else {
+                return "END Invalid selection. Please try again.";
+            }
+            
+        } catch (NumberFormatException e) {
+            return "END Invalid selection. Please try again.";
+        }
+    }
+
+    /**
+     * Handles Ihereze selection
+     */
+    private String handleIherezeSelectionText(String selection, String phoneNumber, UssdSession session) {
+        try {
+            int optionIndex = Integer.parseInt(selection);
+            
+            if (optionIndex == 0) {
+                // Go back to main YOLO menu
+                session.setCurrentState("main_menu");
+                sessionRepo.save(session);
+                return showMainMenuText();
+            } else if (optionIndex == 1) {
+                return "END 200Frw - Coming soon!";
+            } else if (optionIndex == 2) {
+                return "END Airtime - Coming soon!";
+            } else if (optionIndex == 3) {
+                return "END Gwamon' - Coming soon!";
+            } else if (optionIndex == 4) {
+                return "END Voice + Internet - Coming soon!";
+            } else if (optionIndex == 5) {
+                return "END Tira4Me - Coming soon!";
+            } else {
+                return "END Invalid selection. Please try again.";
+            }
+            
+        } catch (NumberFormatException e) {
+            return "END Invalid selection. Please try again.";
+        }
+    }
+
+    /**
+     * Handles YOLO Star selection
+     */
+    private String handleYoloStarSelectionText(String selection, String phoneNumber, UssdSession session) {
+        try {
+            int optionIndex = Integer.parseInt(selection);
+            
+            if (optionIndex == 0) {
+                // Go back to main YOLO menu
+                session.setCurrentState("main_menu");
+                sessionRepo.save(session);
+                return showMainMenuText();
+            } else if (optionIndex == 1) {
+                return "END Join YOLO Star - Coming soon!";
+            } else if (optionIndex == 2) {
+                return "END My YOLO Star Account - Coming soon!";
+            } else if (optionIndex == 3) {
+                return "END YOLO Star Partners - Coming soon!";
+            } else if (optionIndex == 4) {
+                return "END Redeem Loyalty Points - Coming soon!";
+            } else if (optionIndex == 5) {
+                return "END Other info - Coming soon!";
             } else {
                 return "END Invalid selection. Please try again.";
             }
@@ -508,13 +1147,13 @@ public class UssdController {
      * Shows payment menu as plain text
      */
     private String showPaymentMenuText() {
-        StringBuilder paymentMenu = new StringBuilder();
+                StringBuilder paymentMenu = new StringBuilder();
         paymentMenu.append("CON Payment Options\n");
         paymentMenu.append("Choose payment method:\n\n");
-        paymentMenu.append("1. Airtime\n");
-        paymentMenu.append("2. MoMo\n");
-        paymentMenu.append("0. Go back");
-        
+                paymentMenu.append("1. Airtime\n");
+                paymentMenu.append("2. MoMo\n");
+                paymentMenu.append("0. Go back");
+                
         return paymentMenu.toString();
     }
 
@@ -754,6 +1393,36 @@ public class UssdController {
             } else if ("yolo_voice_next".equals(currentState)) {
                 // User is in YOLO Voice next page - handle selection
                 return handleYoloVoiceNextPageSelectionText(selection.trim(), phoneNumber, session);
+            } else if ("yolo_internet".equals(currentState)) {
+                // User is in YOLO Internet menu - handle selection
+                return handleYoloInternetSelectionText(selection.trim(), phoneNumber, session);
+            } else if ("yolo_internet_daily".equals(currentState)) {
+                // User is in YOLO Internet Daily menu - handle selection
+                return handleYoloInternetDailySelectionText(selection.trim(), phoneNumber, session);
+            } else if ("yolo_internet_weekly".equals(currentState)) {
+                // User is in YOLO Internet Weekly menu - handle selection
+                return handleYoloInternetWeeklySelectionText(selection.trim(), phoneNumber, session);
+            } else if ("yolo_internet_monthly".equals(currentState)) {
+                // User is in YOLO Internet Monthly menu - handle selection
+                return handleYoloInternetMonthlySelectionText(selection.trim(), phoneNumber, session);
+            } else if ("yolo_internet_hourly".equals(currentState)) {
+                // User is in YOLO Internet Hourly menu - handle selection
+                return handleYoloInternetHourlySelectionText(selection.trim(), phoneNumber, session);
+            } else if ("other_bundles".equals(currentState)) {
+                // User is in Other Bundles menu - handle selection
+                return handleOtherBundlesSelectionText(selection.trim(), phoneNumber, session);
+            } else if ("desade".equals(currentState)) {
+                // User is in DesaDe menu - handle selection
+                return handleDesaDeSelectionText(selection.trim(), phoneNumber, session);
+            } else if ("foleva".equals(currentState)) {
+                // User is in FoLeva menu - handle selection
+                return handleFoLevaSelectionText(selection.trim(), phoneNumber, session);
+            } else if ("ihereze".equals(currentState)) {
+                // User is in Ihereze menu - handle selection
+                return handleIherezeSelectionText(selection.trim(), phoneNumber, session);
+            } else if ("yolo_star".equals(currentState)) {
+                // User is in YOLO Star menu - handle selection
+                return handleYoloStarSelectionText(selection.trim(), phoneNumber, session);
             } else if ("gwamon_menu".equals(currentState)) {
                 // User is in Gwamon bundles menu - handle bundle selection
                 return handleGwamonMenuSelectionText(selection.trim(), phoneNumber, session);
@@ -784,16 +1453,28 @@ public class UssdController {
                 String lastInput = session.getLastInput();
                 if ("triple_data_promo".equals(lastInput)) {
                     session.setCurrentState("triple_data_promo");
-                    sessionRepo.save(session);
+                sessionRepo.save(session);
                     return showTripleDataPromoText();
                 } else if ("yolo_voice".equals(lastInput)) {
                     session.setCurrentState("yolo_voice");
                     sessionRepo.save(session);
                     return showYoloVoiceText();
+                } else if ("other_bundles".equals(lastInput)) {
+                    session.setCurrentState("other_bundles");
+                    sessionRepo.save(session);
+                    return showOtherBundlesText();
+                } else if ("desade".equals(lastInput)) {
+                    session.setCurrentState("desade");
+                    sessionRepo.save(session);
+                    return showDesaDeText();
+                } else if ("foleva".equals(lastInput)) {
+                    session.setCurrentState("foleva");
+                    sessionRepo.save(session);
+                    return showFoLevaText();
                 } else {
                     // Default to Gwamon bundles menu
                     session.setCurrentState("gwamon_menu");
-                sessionRepo.save(session);
+                    sessionRepo.save(session);
                     return showGwamonBundlesText();
                 }
             }
@@ -829,6 +1510,24 @@ public class UssdController {
                 bundleDescription = "1000Frw=(120 Mins+1GB) per day /7days";
             } else if (selectedBundleId == 14L) {
                 bundleDescription = "2000Frw=4000Mins+100SMS/30 Days";
+            } else if (selectedBundleId == 20L) {
+                bundleDescription = "100Frw=100MB/24hrs";
+            } else if (selectedBundleId == 21L) {
+                bundleDescription = "500Frw=500MB/7Days";
+            } else if (selectedBundleId == 22L) {
+                bundleDescription = "1000Frw=800MB/30Days";
+            } else if (selectedBundleId == 30L) {
+                bundleDescription = "200Frw=200Mins+200SMS/2 Days";
+            } else if (selectedBundleId == 31L) {
+                bundleDescription = "200Frw=200MBs+200SMS/2Days";
+            } else if (selectedBundleId == 32L) {
+                bundleDescription = "200Frw=100Mins+100MBs/2Days";
+            } else if (selectedBundleId == 40L) {
+                bundleDescription = "5000Frw=10GB+1000Mins";
+            } else if (selectedBundleId == 41L) {
+                bundleDescription = "10000Frw=25GB+2500Mins";
+            } else if (selectedBundleId == 42L) {
+                bundleDescription = "20000Frw=75GB+3000 Mins";
             } else {
                 // Handle database bundles (Gwamon bundles)
             Optional<Bundle> bundleOpt = bundleRepo.findById(selectedBundleId.intValue());
