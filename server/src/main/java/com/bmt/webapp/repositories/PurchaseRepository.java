@@ -12,9 +12,9 @@ import java.util.List;
  * Tracks all bundle purchases made through the application
  * Supports Frontend, Postman, and USSD code like *154#
  */
-public interface PurchaseRepository extends JpaRepository<Purchase, Integer> {
+public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
     // Find purchases by phone number
-    @Query("SELECT p FROM Purchase p WHERE p.phoneNumber = :phoneNumber ORDER BY p.purchaseDate DESC")
+    @Query("SELECT p FROM Purchase p WHERE p.phoneNumber = :phoneNumber ORDER BY p.purchasedAt DESC")
     List<Purchase> findByPhoneNumber(@Param("phoneNumber") String phoneNumber);
     
     // Find purchases by status
@@ -26,11 +26,11 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Integer> {
     List<Purchase> findByPaymentMethod(@Param("paymentMethod") String paymentMethod, Sort sort);
     
     // Find purchases by bundle ID (for foreign key constraint checking)
-    @Query("SELECT p FROM Purchase p WHERE p.bundle.id = :bundleId")
-    List<Purchase> findByBundleId(@Param("bundleId") int bundleId);
+    @Query("SELECT p FROM Purchase p WHERE p.bundleId = :bundleId")
+    List<Purchase> findByBundleId(@Param("bundleId") Long bundleId);
     
     // Find all purchases with proper ordering
-    @Query("SELECT p FROM Purchase p ORDER BY p.purchaseDate DESC")
+    @Query("SELECT p FROM Purchase p ORDER BY p.purchasedAt DESC")
     List<Purchase> findAllPurchases();
 }
 

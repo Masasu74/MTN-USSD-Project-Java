@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 /**
  * USSD Session model for tracking user sessions and state
+ * Enhanced with category tracking and navigation history
  */
 @Entity
 @Table(name = "ussd_sessions")
@@ -17,17 +18,26 @@ public class UssdSession {
     @Column(name = "session_id", unique = true, nullable = false)
     private String sessionId;
     
-    @Column(name = "phone_number", nullable = false)
+    @Column(name = "phone_number", nullable = false, length = 20)
     private String phoneNumber;
     
-    @Column(name = "current_state")
+    @Column(name = "current_state", length = 100)
     private String currentState; // main_menu, payment_menu, etc.
+    
+    @Column(name = "current_category_id")
+    private Long currentCategoryId;
     
     @Column(name = "selected_bundle_id")
     private Long selectedBundleId;
     
     @Column(name = "last_input")
     private String lastInput;
+    
+    @Column(name = "navigation_path", columnDefinition = "TEXT")
+    private String navigationPath; // JSON array of navigation history
+    
+    @Column(name = "session_data", columnDefinition = "JSON")
+    private String sessionData; // Additional session data
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -69,6 +79,12 @@ public class UssdSession {
         this.updatedAt = LocalDateTime.now();
     }
     
+    public Long getCurrentCategoryId() { return currentCategoryId; }
+    public void setCurrentCategoryId(Long currentCategoryId) { 
+        this.currentCategoryId = currentCategoryId;
+        this.updatedAt = LocalDateTime.now();
+    }
+    
     public Long getSelectedBundleId() { return selectedBundleId; }
     public void setSelectedBundleId(Long selectedBundleId) { 
         this.selectedBundleId = selectedBundleId;
@@ -80,6 +96,12 @@ public class UssdSession {
         this.lastInput = lastInput;
         this.updatedAt = LocalDateTime.now();
     }
+    
+    public String getNavigationPath() { return navigationPath; }
+    public void setNavigationPath(String navigationPath) { this.navigationPath = navigationPath; }
+    
+    public String getSessionData() { return sessionData; }
+    public void setSessionData(String sessionData) { this.sessionData = sessionData; }
     
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

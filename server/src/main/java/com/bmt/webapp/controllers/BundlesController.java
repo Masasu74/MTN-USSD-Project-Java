@@ -71,13 +71,23 @@ public class BundlesController {
      * Used for bundle details and purchase operations
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Bundle> getBundleById(@PathVariable int id) {
+    public ResponseEntity<Bundle> getBundleById(@PathVariable Long id) {
         Optional<Bundle> bundle = bundleRepo.findById(id);
         if (bundle.isPresent()) {
             return ResponseEntity.ok(bundle.get());
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    /**
+     * GET /api/bundles/category/{categoryId} - Get bundles by category
+     * Returns all active bundles for a specific category
+     */
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<List<Bundle>> getBundlesByCategory(@PathVariable Long categoryId) {
+        List<Bundle> bundles = bundleRepo.findByCategoryIdAndIsActiveTrueOrderByDisplayOrder(categoryId);
+        return ResponseEntity.ok(bundles);
     }
 
     /**
@@ -90,14 +100,17 @@ public class BundlesController {
         try {
             // Create new bundle entity
             Bundle bundle = new Bundle();
+            bundle.setCode("bundle_" + System.currentTimeMillis()); // Generate unique code
+            bundle.setCategoryId(2L); // Default to Gwamon category
+            bundle.setDisplayOrder(0); // Default display order
             bundle.setName(bundleDto.getName());
-            bundle.setPrice(bundleDto.getPrice());
-            bundle.setData(bundleDto.getData());
+            bundle.setPrice(java.math.BigDecimal.valueOf(bundleDto.getPrice()));
+            bundle.setDataMb(bundleDto.getData());
             bundle.setMinutes(bundleDto.getMinutes());
             bundle.setSms(bundleDto.getSms());
-            bundle.setValidUntil(bundleDto.getValidUntil());
+            bundle.setValidityHours(bundleDto.getValidUntil());
             bundle.setIsWeekend(bundleDto.isWeekend());
-            bundle.setStatus(bundleDto.getStatus());
+            bundle.setIsActive(true);
             bundle.setCreatedAt(new Date());
             bundle.setUpdatedAt(new Date());
 
@@ -128,7 +141,7 @@ public class BundlesController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<?> updateBundle(
-            @PathVariable int id,
+            @PathVariable Long id,
             @Valid @RequestBody BundleDto bundleDto
     ) {
         try {
@@ -146,13 +159,13 @@ public class BundlesController {
 
             // Update the existing bundle
             existingBundle.setName(bundleDto.getName());
-            existingBundle.setPrice(bundleDto.getPrice());
-            existingBundle.setData(bundleDto.getData());
+            existingBundle.setPrice(java.math.BigDecimal.valueOf(bundleDto.getPrice()));
+            existingBundle.setDataMb(bundleDto.getData());
             existingBundle.setMinutes(bundleDto.getMinutes());
             existingBundle.setSms(bundleDto.getSms());
-            existingBundle.setValidUntil(bundleDto.getValidUntil());
-                   existingBundle.setIsWeekend(bundleDto.isWeekend());
-            existingBundle.setStatus(bundleDto.getStatus());
+            existingBundle.setValidityHours(bundleDto.getValidUntil());
+            existingBundle.setIsWeekend(bundleDto.isWeekend());
+            existingBundle.setIsActive(true);
             existingBundle.setUpdatedAt(new Date());
 
             Bundle updatedBundle = bundleRepo.save(existingBundle);
@@ -176,7 +189,7 @@ public class BundlesController {
      * Note: This will automatically delete all associated purchases (cascading delete)
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteBundle(@PathVariable int id) {
+    public ResponseEntity<?> deleteBundle(@PathVariable Long id) {
         try {
             Optional<Bundle> bundleOpt = bundleRepo.findById(id);
             if (!bundleOpt.isPresent()) {
@@ -245,7 +258,7 @@ public class BundlesController {
             Bundle bundle = bundleOpt.get();
 
             // Check if bundle is active
-            if (!"Active".equals(bundle.getStatus())) {
+            if (bundle.getIsActive() == null || !bundle.getIsActive()) {
                 return ResponseEntity.badRequest()
                     .body(new ErrorResponse("Bundle is not available for purchase"));
             }
@@ -267,11 +280,11 @@ public class BundlesController {
             purchase.setPhoneNumber(purchaseRequest.getPhoneNumber());
             purchase.setPaymentMethod(purchaseRequest.getPaymentMethod());
             purchase.setStatus("completed");
-            purchase.setPurchaseDate(new Date());
+            purchase.setPurchasedAt(new Date());
+            purchase.setCompletedAt(new Date());
             purchase.setPurchaseId("PUR-" + System.currentTimeMillis());
-
-            // Set the bundle reference (foreign key relationship)
-            purchase.setBundle(bundle);
+            purchase.setBundleId(bundle.getId());
+            purchase.setAmount(bundle.getPrice());
 
             Purchase savedPurchase = purchaseRepo.save(purchase);
 
@@ -309,16 +322,16 @@ public class BundlesController {
      * Used for handling purchase requests from Frontend, Postman, or USSD
      */
     public static class PurchaseRequest {
-        private int bundleId;
+        private Long bundleId;
         private String phoneNumber;
         private String paymentMethod;
 
         // Getters and Setters
-        public int getBundleId() {
+        public Long getBundleId() {
             return bundleId;
         }
 
-        public void setBundleId(int bundleId) {
+        public void setBundleId(Long bundleId) {
             this.bundleId = bundleId;
         }
 

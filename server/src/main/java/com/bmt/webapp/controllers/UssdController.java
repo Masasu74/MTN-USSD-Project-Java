@@ -1,9 +1,11 @@
 package com.bmt.webapp.controllers;
 
 import com.bmt.webapp.models.Bundle;
+import com.bmt.webapp.models.MenuCategory;
 import com.bmt.webapp.models.Purchase;
 import com.bmt.webapp.models.UssdSession;
 import com.bmt.webapp.repositories.BundleRepository;
+import com.bmt.webapp.repositories.MenuCategoryRepository;
 import com.bmt.webapp.repositories.PurchaseRepository;
 import com.bmt.webapp.repositories.UssdSessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +51,9 @@ public class UssdController {
     
     @Autowired
     private UssdSessionRepository sessionRepo;
+    
+    @Autowired
+    private MenuCategoryRepository categoryRepo;
 
     /**
      * POST /ussd - Main USSD endpoint
@@ -114,23 +119,48 @@ public class UssdController {
     }
 
     /**
-     * Shows the main YOLO menu as plain text
+     * Shows the main YOLO menu as plain text - DYNAMICALLY from database
      */
     private String showMainMenuText() {
         StringBuilder menu = new StringBuilder();
         menu.append("CON YOLO\n");
         menu.append("Choose an option:\n\n");
-        menu.append("99) Triple Data Promo\n");
-        menu.append("0) Gwamon'\n");
-        menu.append("1) YOLO Voice\n");
-        menu.append("2) YOLO Internet\n");
-        menu.append("3) Other Bundles\n");
-        menu.append("4) DesaDe\n");
-        menu.append("5) Balance check\n");
-        menu.append("6) FoLeva\n");
-        menu.append("7) Ihereze\n");
-        menu.append("8) YOLO Star\n");
-        menu.append("n) Next");
+        
+        // Fetch main menu categories from database (parent_id is NULL)
+        List<MenuCategory> mainCategories = categoryRepo.findByIsActiveTrueAndParentIdIsNullOrderByDisplayOrder();
+        
+        if (mainCategories.isEmpty()) {
+            // Fallback to static menu if database is empty
+            menu.append("99) Triple Data Promo\n");
+            menu.append("0) Gwamon'\n");
+            menu.append("1) YOLO Voice\n");
+            menu.append("2) YOLO Internet\n");
+            menu.append("3) Other Bundles\n");
+            menu.append("4) DesaDe\n");
+            menu.append("5) Balance check\n");
+            menu.append("6) FoLeva\n");
+            menu.append("7) Ihereze\n");
+            menu.append("8) YOLO Star\n");
+            menu.append("n) Next");
+        } else {
+            // Build menu dynamically from database
+            for (MenuCategory category : mainCategories) {
+                // Special handling for Triple Data Promo (display as 99)
+                if ("triple_data_promo".equals(category.getCode())) {
+                    menu.append("99) ").append(category.getName()).append("\n");
+                }
+                // Special handling for Gwamon (display as 0)
+                else if ("gwamon".equals(category.getCode())) {
+                    menu.append("0) ").append(category.getName()).append("\n");
+                }
+                // Regular options (1-8)
+                else {
+                    int displayNumber = category.getDisplayOrder() - 1; // Adjust for 99 and 0
+                    menu.append(displayNumber).append(") ").append(category.getName()).append("\n");
+                }
+            }
+            menu.append("n) Next");
+        }
         
         return menu.toString();
     }
@@ -325,7 +355,8 @@ public class UssdController {
      * Shows Gwamon bundles menu
      */
     private UssdResponse showGwamonBundles() {
-        List<Bundle> bundles = bundleRepo.findByStatusOrderByIdDesc("Active");
+        // Category 2 is Gwamon
+        List<Bundle> bundles = bundleRepo.findByCategoryIdAndIsActiveTrueOrderByDisplayOrder(2L);
         
         StringBuilder menu = new StringBuilder();
         menu.append("Gwamon' Bundles\n");
@@ -419,31 +450,59 @@ public class UssdController {
     }
 
     /**
-     * Shows Triple Data Promo menu as plain text
+     * Shows Triple Data Promo menu as plain text - DYNAMICALLY from database
      */
     private String showTripleDataPromoText() {
         StringBuilder menu = new StringBuilder();
         menu.append("CON Triple Data Promo\n");
         menu.append("Choose an option:\n\n");
-        menu.append("1) 200Frw=600MB+300MB(Night)/24hrs\n");
-        menu.append("2) 500Frw=2GB+1GB (Night)/24hrs\n");
-        menu.append("3) 1000Frw=2GB+1GB (Night)/7dys\n");
+        
+        // Fetch bundles from category 1 (Triple Data Promo)
+        List<Bundle> bundles = bundleRepo.findByCategoryIdAndIsActiveTrueOrderByDisplayOrder(1L);
+        
+        if (bundles.isEmpty()) {
+            // Fallback to static if database is empty
+            menu.append("1) 200Frw=600MB+300MB(Night)/24hrs\n");
+            menu.append("2) 500Frw=2GB+1GB (Night)/24hrs\n");
+            menu.append("3) 1000Frw=2GB+1GB (Night)/7dys\n");
+        } else {
+            // Build menu dynamically
+            int index = 1;
+        for (Bundle bundle : bundles) {
+                menu.append(index++).append(") ").append(bundle.getUssdDisplayFormat()).append("\n");
+            }
+        }
+        
         menu.append("0) Go back");
         
         return menu.toString();
     }
 
     /**
-     * Shows YOLO Voice menu as plain text
+     * Shows YOLO Voice menu as plain text - DYNAMICALLY from database
      */
     private String showYoloVoiceText() {
         StringBuilder menu = new StringBuilder();
         menu.append("CON YOLO Voice\n");
         menu.append("Choose an option:\n\n");
-        menu.append("1) 100Frw=50Mins+20SMS/24hrs\n");
-        menu.append("2) 200Frw=250Mins+20SMS/24hrs\n");
-        menu.append("3) 500Frw=800Mins+20SMS/7Days\n");
-        menu.append("4) 1000Frw=(120 Mins+1GB) per day /7days\n");
+        
+        // Fetch bundles from category 3 (YOLO Voice) - first 4 items
+        List<Bundle> bundles = bundleRepo.findByCategoryIdAndIsActiveTrueOrderByDisplayOrder(3L);
+        
+        if (bundles.isEmpty()) {
+            // Fallback to static
+            menu.append("1) 100Frw=50Mins+20SMS/24hrs\n");
+            menu.append("2) 200Frw=250Mins+20SMS/24hrs\n");
+            menu.append("3) 500Frw=800Mins+20SMS/7Days\n");
+            menu.append("4) 1000Frw=(120 Mins+1GB) per day /7days\n");
+        } else {
+            // Show first 4 bundles
+            int count = Math.min(4, bundles.size());
+            for (int i = 0; i < count; i++) {
+                menu.append(i + 1).append(") ").append(bundles.get(i).getUssdDisplayFormat()).append("\n");
+            }
+        }
+        
         menu.append("n) Next\n");
         menu.append("0) Go back");
         
@@ -451,15 +510,29 @@ public class UssdController {
     }
 
     /**
-     * Shows Other Bundles menu as plain text
+     * Shows Other Bundles menu as plain text - DYNAMICALLY from database
      */
     private String showOtherBundlesText() {
         StringBuilder menu = new StringBuilder();
         menu.append("CON Other Bundles\n");
         menu.append("Choose an option:\n\n");
-        menu.append("1) 100Frw=100MB/24hrs\n");
-        menu.append("2) 500Frw=500MB/7Days\n");
-        menu.append("3) 1000Frw=800MB/30Days\n");
+        
+        // Fetch bundles from category 5 (Other Bundles)
+        List<Bundle> bundles = bundleRepo.findByCategoryIdAndIsActiveTrueOrderByDisplayOrder(5L);
+        
+        if (bundles.isEmpty()) {
+            // Fallback to static
+            menu.append("1) 100Frw=100MB/24hrs\n");
+            menu.append("2) 500Frw=500MB/7Days\n");
+            menu.append("3) 1000Frw=800MB/30Days\n");
+        } else {
+            // Build menu dynamically
+            int index = 1;
+            for (Bundle bundle : bundles) {
+                menu.append(index++).append(") ").append(bundle.getUssdDisplayFormat()).append("\n");
+            }
+        }
+        
         menu.append("4) DesaDe\n");
         menu.append("0) Go back");
         
@@ -467,30 +540,58 @@ public class UssdController {
     }
 
     /**
-     * Shows DesaDe menu as plain text
+     * Shows DesaDe menu as plain text - DYNAMICALLY from database
      */
     private String showDesaDeText() {
         StringBuilder menu = new StringBuilder();
         menu.append("CON DesaDe\n");
         menu.append("Valid till the second day at 23:59\n\n");
-        menu.append("1) 200Frw=200Mins+200SMS/2 Days\n");
-        menu.append("2) 200Frw=200MBs+200SMS/2Days\n");
-        menu.append("3) 200Frw=100Mins+100MBs/2Days\n");
+        
+        // Fetch bundles from category 6 (DesaDe)
+        List<Bundle> bundles = bundleRepo.findByCategoryIdAndIsActiveTrueOrderByDisplayOrder(6L);
+        
+        if (bundles.isEmpty()) {
+            // Fallback to static
+            menu.append("1) 200Frw=200Mins+200SMS/2 Days\n");
+            menu.append("2) 200Frw=200MBs+200SMS/2Days\n");
+            menu.append("3) 200Frw=100Mins+100MBs/2Days\n");
+        } else {
+            // Build menu dynamically
+            int index = 1;
+            for (Bundle bundle : bundles) {
+                menu.append(index++).append(") ").append(bundle.getUssdDisplayFormat()).append("\n");
+            }
+        }
+        
         menu.append("0) Go back");
         
         return menu.toString();
     }
 
     /**
-     * Shows FoLeva menu as plain text
+     * Shows FoLeva menu as plain text - DYNAMICALLY from database
      */
     private String showFoLevaText() {
         StringBuilder menu = new StringBuilder();
         menu.append("CON FoLeva Bundles\n");
         menu.append("Valid until the last MB\n\n");
-        menu.append("1) 5000Frw=10GB+1000Mins\n");
-        menu.append("2) 10000Frw=25GB+2500Mins\n");
-        menu.append("3) 20000Frw=75GB+3000 Mins\n");
+        
+        // Fetch bundles from category 8 (FoLeva)
+        List<Bundle> bundles = bundleRepo.findByCategoryIdAndIsActiveTrueOrderByDisplayOrder(8L);
+        
+        if (bundles.isEmpty()) {
+            // Fallback to static
+            menu.append("1) 5000Frw=10GB+1000Mins\n");
+            menu.append("2) 10000Frw=25GB+2500Mins\n");
+            menu.append("3) 20000Frw=75GB+3000 Mins\n");
+        } else {
+            // Build menu dynamically
+            int index = 1;
+            for (Bundle bundle : bundles) {
+                menu.append(index++).append(") ").append(bundle.getUssdDisplayFormat()).append("\n");
+            }
+        }
+        
         menu.append("0) Go back");
         
         return menu.toString();
@@ -579,6 +680,46 @@ public class UssdController {
     }
 
     /**
+     * Shows Social Media Bundles menu as plain text
+     */
+    private String showSocialMediaBundlesText() {
+        StringBuilder menu = new StringBuilder();
+        menu.append("CON Social Media Bundles(24hrs)\n");
+        menu.append("Choose an option:\n\n");
+        menu.append("1) Whatsapp\n");
+        menu.append("2) Facebook na Instagram\n");
+        menu.append("0) Gusubira Inyuma");
+        
+        return menu.toString();
+    }
+
+    /**
+     * Shows WhatsApp bundles menu as plain text
+     */
+    private String showWhatsAppBundlesText() {
+        StringBuilder menu = new StringBuilder();
+        menu.append("CON Whatsapp\n");
+        menu.append("Choose an option:\n\n");
+        menu.append("1) 200Frw = 510MBs/24hrs\n");
+        menu.append("0) Gusubira Inyuma");
+        
+        return menu.toString();
+    }
+
+    /**
+     * Shows Facebook/Instagram bundles menu as plain text
+     */
+    private String showFacebookInstagramBundlesText() {
+        StringBuilder menu = new StringBuilder();
+        menu.append("CON Facebook na Instagram\n");
+        menu.append("Choose an option:\n\n");
+        menu.append("1) 200Frw = 810MBs/24hrs\n");
+        menu.append("0) Gusubira Inyuma");
+        
+        return menu.toString();
+    }
+
+    /**
      * Shows Ihereze menu as plain text
      */
     private String showIherezeText() {
@@ -662,25 +803,19 @@ public class UssdController {
                 session.setCurrentState("main_menu");
                 sessionRepo.save(session);
                 return showMainMenuText();
-            } else if (optionIndex == 1) {
+            }
+            
+            // Fetch bundles from category 1 (Triple Data Promo)
+            List<Bundle> bundles = bundleRepo.findByCategoryIdAndIsActiveTrueOrderByDisplayOrder(1L);
+            
+            if (optionIndex >= 1 && optionIndex <= bundles.size()) {
+                // Get the selected bundle
+                Bundle selectedBundle = bundles.get(optionIndex - 1);
+                
                 // Store bundle selection and show payment options
-                session.setSelectedBundleId(1L); // 200Frw bundle
+                session.setSelectedBundleId(selectedBundle.getId());
                 session.setCurrentState("payment_menu");
-                session.setLastInput("triple_data_promo"); // Remember we came from Triple Data Promo
-                sessionRepo.save(session);
-                return showPaymentMenuText();
-            } else if (optionIndex == 2) {
-                // Store bundle selection and show payment options
-                session.setSelectedBundleId(2L); // 500Frw bundle
-                session.setCurrentState("payment_menu");
-                session.setLastInput("triple_data_promo"); // Remember we came from Triple Data Promo
-                sessionRepo.save(session);
-                return showPaymentMenuText();
-            } else if (optionIndex == 3) {
-                // Store bundle selection and show payment options
-                session.setSelectedBundleId(3L); // 1000Frw bundle
-                session.setCurrentState("payment_menu");
-                session.setLastInput("triple_data_promo"); // Remember we came from Triple Data Promo
+                session.setLastInput("triple_data_promo");
                 sessionRepo.save(session);
                 return showPaymentMenuText();
             } else {
@@ -711,32 +846,17 @@ public class UssdController {
                 session.setCurrentState("main_menu");
                 sessionRepo.save(session);
                 return showMainMenuText();
-            } else if (optionIndex == 1) {
-                // Store bundle selection and show payment options
-                session.setSelectedBundleId(10L); // 100Frw voice bundle
+            }
+            
+            // Fetch bundles from category 3 (YOLO Voice)
+            List<Bundle> bundles = bundleRepo.findByCategoryIdAndIsActiveTrueOrderByDisplayOrder(3L);
+            
+            // Check if selection is valid (1-4 for first page)
+            if (optionIndex >= 1 && optionIndex <= Math.min(4, bundles.size())) {
+                Bundle selectedBundle = bundles.get(optionIndex - 1);
+                session.setSelectedBundleId(selectedBundle.getId());
                 session.setCurrentState("payment_menu");
-                session.setLastInput("yolo_voice"); // Remember we came from YOLO Voice
-                sessionRepo.save(session);
-                return showPaymentMenuText();
-            } else if (optionIndex == 2) {
-                // Store bundle selection and show payment options
-                session.setSelectedBundleId(11L); // 200Frw voice bundle
-                session.setCurrentState("payment_menu");
-                session.setLastInput("yolo_voice"); // Remember we came from YOLO Voice
-                sessionRepo.save(session);
-                return showPaymentMenuText();
-            } else if (optionIndex == 3) {
-                // Store bundle selection and show payment options
-                session.setSelectedBundleId(12L); // 500Frw voice bundle
-                session.setCurrentState("payment_menu");
-                session.setLastInput("yolo_voice"); // Remember we came from YOLO Voice
-                sessionRepo.save(session);
-                return showPaymentMenuText();
-            } else if (optionIndex == 4) {
-                // Store bundle selection and show payment options
-                session.setSelectedBundleId(13L); // 1000Frw voice bundle
-                session.setCurrentState("payment_menu");
-                session.setLastInput("yolo_voice"); // Remember we came from YOLO Voice
+                session.setLastInput("yolo_voice");
                 sessionRepo.save(session);
                 return showPaymentMenuText();
             } else {
@@ -950,7 +1070,10 @@ public class UssdController {
                 sessionRepo.save(session);
                 return showYoloInternetHourlyText();
             } else if (optionIndex == 6) {
-                return "END Social Media Bundles - Coming soon!";
+                // Navigate to Social Media Bundles menu
+                session.setCurrentState("social_media_bundles");
+                sessionRepo.save(session);
+                return showSocialMediaBundlesText();
             } else {
                 return "END Invalid selection. Please try again.";
             }
@@ -1082,6 +1205,83 @@ public class UssdController {
     }
 
     /**
+     * Handles Social Media Bundles main menu selection
+     */
+    private String handleSocialMediaBundlesSelectionText(String selection, String phoneNumber, UssdSession session) {
+        try {
+            int optionIndex = Integer.parseInt(selection);
+            
+            if (optionIndex == 0) {
+                // Go back to YOLO Internet menu
+                session.setCurrentState("yolo_internet");
+                sessionRepo.save(session);
+                return showYoloInternetText();
+            } else if (optionIndex == 1) {
+                // Navigate to WhatsApp bundles
+                session.setCurrentState("whatsapp_bundles");
+                sessionRepo.save(session);
+                return showWhatsAppBundlesText();
+            } else if (optionIndex == 2) {
+                // Navigate to Facebook/Instagram bundles
+                session.setCurrentState("facebook_instagram_bundles");
+                sessionRepo.save(session);
+                return showFacebookInstagramBundlesText();
+            } else {
+                return "END Invalid selection. Please try again.";
+            }
+            
+        } catch (NumberFormatException e) {
+            return "END Invalid selection. Please try again.";
+        }
+    }
+
+    /**
+     * Handles WhatsApp bundles selection
+     */
+    private String handleWhatsAppBundlesSelectionText(String selection, String phoneNumber, UssdSession session) {
+        try {
+            int optionIndex = Integer.parseInt(selection);
+            
+            if (optionIndex == 0) {
+                // Go back to Social Media Bundles menu
+                session.setCurrentState("social_media_bundles");
+                sessionRepo.save(session);
+                return showSocialMediaBundlesText();
+            } else if (optionIndex == 1) {
+                return "END 200Frw = 510MBs/24hrs - Coming soon!";
+            } else {
+                return "END Invalid selection. Please try again.";
+            }
+            
+        } catch (NumberFormatException e) {
+            return "END Invalid selection. Please try again.";
+        }
+    }
+
+    /**
+     * Handles Facebook/Instagram bundles selection
+     */
+    private String handleFacebookInstagramBundlesSelectionText(String selection, String phoneNumber, UssdSession session) {
+        try {
+            int optionIndex = Integer.parseInt(selection);
+            
+            if (optionIndex == 0) {
+                // Go back to Social Media Bundles menu
+                session.setCurrentState("social_media_bundles");
+                sessionRepo.save(session);
+                return showSocialMediaBundlesText();
+            } else if (optionIndex == 1) {
+                return "END 200Frw = 810MBs/24hrs - Coming soon!";
+            } else {
+                return "END Invalid selection. Please try again.";
+            }
+            
+        } catch (NumberFormatException e) {
+            return "END Invalid selection. Please try again.";
+        }
+    }
+
+    /**
      * Handles Ihereze selection
      */
     private String handleIherezeSelectionText(String selection, String phoneNumber, UssdSession session) {
@@ -1161,7 +1361,8 @@ public class UssdController {
      * Shows Gwamon bundles menu as plain text
      */
     private String showGwamonBundlesText() {
-        List<Bundle> bundles = bundleRepo.findByStatusOrderByIdDesc("Active");
+        // Category 2 is Gwamon
+        List<Bundle> bundles = bundleRepo.findByCategoryIdAndIsActiveTrueOrderByDisplayOrder(2L);
         
         StringBuilder menu = new StringBuilder();
         menu.append("CON Gwamon' Bundles\n");
@@ -1192,7 +1393,8 @@ public class UssdController {
                 return showMainMenuText();
             }
             
-            List<Bundle> bundles = bundleRepo.findByStatusOrderByIdDesc("Active");
+            // Category 2 is Gwamon
+            List<Bundle> bundles = bundleRepo.findByCategoryIdAndIsActiveTrueOrderByDisplayOrder(2L);
             
             // Handle selection for any bundle (1-6)
             if (bundleIndex >= 1 && bundleIndex <= bundles.size()) {
@@ -1244,7 +1446,8 @@ public class UssdController {
                 return new UssdResponse("Invalid payment method. Please try again.", "END");
             }
             
-            List<Bundle> bundles = bundleRepo.findByStatusOrderByIdDesc("Active");
+            // Category 2 is Gwamon
+            List<Bundle> bundles = bundleRepo.findByCategoryIdAndIsActiveTrueOrderByDisplayOrder(2L);
             if (bundleIndex < 1 || bundleIndex > bundles.size()) {
                 return new UssdResponse("Invalid bundle selection.", "END");
             }
@@ -1257,9 +1460,11 @@ public class UssdController {
             purchase.setPhoneNumber(phoneNumber);
             purchase.setPaymentMethod(paymentMethodName);
             purchase.setStatus("completed");
-            purchase.setPurchaseDate(new Date());
+            purchase.setPurchasedAt(new Date());
+            purchase.setCompletedAt(new Date());
             purchase.setPurchaseId("PUR-" + System.currentTimeMillis());
-            purchase.setBundle(selectedBundle);
+            purchase.setBundleId(selectedBundle.getId());
+            purchase.setAmount(selectedBundle.getPrice());
             
             purchaseRepo.save(purchase);
             
@@ -1408,6 +1613,15 @@ public class UssdController {
             } else if ("yolo_internet_hourly".equals(currentState)) {
                 // User is in YOLO Internet Hourly menu - handle selection
                 return handleYoloInternetHourlySelectionText(selection.trim(), phoneNumber, session);
+            } else if ("social_media_bundles".equals(currentState)) {
+                // User is in Social Media Bundles menu - handle selection
+                return handleSocialMediaBundlesSelectionText(selection.trim(), phoneNumber, session);
+            } else if ("whatsapp_bundles".equals(currentState)) {
+                // User is in WhatsApp Bundles menu - handle selection
+                return handleWhatsAppBundlesSelectionText(selection.trim(), phoneNumber, session);
+            } else if ("facebook_instagram_bundles".equals(currentState)) {
+                // User is in Facebook/Instagram Bundles menu - handle selection
+                return handleFacebookInstagramBundlesSelectionText(selection.trim(), phoneNumber, session);
             } else if ("other_bundles".equals(currentState)) {
                 // User is in Other Bundles menu - handle selection
                 return handleOtherBundlesSelectionText(selection.trim(), phoneNumber, session);
@@ -1493,62 +1707,28 @@ public class UssdController {
             String bundleDescription = "";
             String confirmation = "";
             
-            // Handle Triple Data Promo bundles (IDs 1, 2, 3)
-            if (selectedBundleId == 1L) {
-                bundleDescription = "200Frw=600MB+300MB(Night)/24hrs";
-            } else if (selectedBundleId == 2L) {
-                bundleDescription = "500Frw=2GB+1GB (Night)/24hrs";
-            } else if (selectedBundleId == 3L) {
-                bundleDescription = "1000Frw=2GB+1GB (Night)/7dys";
-            } else if (selectedBundleId == 10L) {
-                bundleDescription = "100Frw=50Mins+20SMS/24hrs";
-            } else if (selectedBundleId == 11L) {
-                bundleDescription = "200Frw=250Mins+20SMS/24hrs";
-            } else if (selectedBundleId == 12L) {
-                bundleDescription = "500Frw=800Mins+20SMS/7Days";
-            } else if (selectedBundleId == 13L) {
-                bundleDescription = "1000Frw=(120 Mins+1GB) per day /7days";
-            } else if (selectedBundleId == 14L) {
-                bundleDescription = "2000Frw=4000Mins+100SMS/30 Days";
-            } else if (selectedBundleId == 20L) {
-                bundleDescription = "100Frw=100MB/24hrs";
-            } else if (selectedBundleId == 21L) {
-                bundleDescription = "500Frw=500MB/7Days";
-            } else if (selectedBundleId == 22L) {
-                bundleDescription = "1000Frw=800MB/30Days";
-            } else if (selectedBundleId == 30L) {
-                bundleDescription = "200Frw=200Mins+200SMS/2 Days";
-            } else if (selectedBundleId == 31L) {
-                bundleDescription = "200Frw=200MBs+200SMS/2Days";
-            } else if (selectedBundleId == 32L) {
-                bundleDescription = "200Frw=100Mins+100MBs/2Days";
-            } else if (selectedBundleId == 40L) {
-                bundleDescription = "5000Frw=10GB+1000Mins";
-            } else if (selectedBundleId == 41L) {
-                bundleDescription = "10000Frw=25GB+2500Mins";
-            } else if (selectedBundleId == 42L) {
-                bundleDescription = "20000Frw=75GB+3000 Mins";
-            } else {
-                // Handle database bundles (Gwamon bundles)
-            Optional<Bundle> bundleOpt = bundleRepo.findById(selectedBundleId.intValue());
+            // Fetch bundle from database by ID
+            Optional<Bundle> bundleOpt = bundleRepo.findById(selectedBundleId);
             if (!bundleOpt.isPresent()) {
                 return "END Bundle not found. Please dial *154# again to start a new session.";
             }
             
             Bundle selectedBundle = bundleOpt.get();
-                bundleDescription = selectedBundle.getUssdDisplayFormat();
+            bundleDescription = selectedBundle.getUssdDisplayFormat();
             
-                // Create purchase record for database bundles
+            // Create purchase record
             Purchase purchase = new Purchase();
             purchase.setPhoneNumber(phoneNumber);
             purchase.setPaymentMethod(paymentMethodName);
             purchase.setStatus("completed");
-            purchase.setPurchaseDate(new Date());
+            purchase.setPurchasedAt(new Date());
+            purchase.setCompletedAt(new Date());
             purchase.setPurchaseId("PUR-" + System.currentTimeMillis());
-            purchase.setBundle(selectedBundle);
+            purchase.setBundleId(selectedBundle.getId());
+            purchase.setAmount(selectedBundle.getPrice());
+            purchase.setSessionId(session.getSessionId());
             
             purchaseRepo.save(purchase);
-            }
             
             // Clean up session
             session.deactivate();
