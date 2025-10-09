@@ -8,9 +8,11 @@ import com.bmt.webapp.repositories.BundleRepository;
 import com.bmt.webapp.repositories.MenuCategoryRepository;
 import com.bmt.webapp.repositories.PurchaseRepository;
 import com.bmt.webapp.repositories.UssdSessionRepository;
+import com.bmt.webapp.services.SessionLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.xml.bind.annotation.*;
@@ -54,6 +56,9 @@ public class UssdController {
     
     @Autowired
     private MenuCategoryRepository categoryRepo;
+    
+    @Autowired
+    private SessionLogService sessionLogService;
 
     /**
      * POST /ussd - Main USSD endpoint
@@ -82,17 +87,30 @@ public class UssdController {
             System.out.println("USSD Request - Session: " + sessionId + ", Phone: " + phoneNumber + ", Text: " + text);
             
             // Handle USSD flow with database session management
+            String response;
             if (text == null || text.isEmpty()) {
                 // Initial request - create or get session and show main menu
-                return handleInitialRequest(sessionId, phoneNumber);
+                response = handleInitialRequest(sessionId, phoneNumber);
+                System.out.println("DEBUG: About to log session interaction. SessionLogService is " + (sessionLogService == null ? "NULL" : "initialized"));
+                logSessionInteraction(sessionId, phoneNumber, "SESSION_START", "Main Menu", "", response, false, null);
             } else {
                 // User made a selection - handle based on session state
-                return handleUserSelectionText(text, phoneNumber, sessionId);
+                response = handleUserSelectionText(text, phoneNumber, sessionId);
+                // Log will be done inside handleUserSelectionText for specific actions
             }
+            
+            return response;
             
         } catch (Exception e) {
             System.err.println("Error processing USSD request: " + e.getMessage());
-            return "Sorry, an error occurred. Please try again later.";
+            e.printStackTrace();
+            String errorResponse = "END Sorry, an error occurred. Please try again later.";
+            try {
+                logSessionInteraction(sessionid, msidn, "ERROR", "Error", input, e.getMessage(), false, null);
+            } catch (Exception logError) {
+                System.err.println("Failed to log error: " + logError.getMessage());
+            }
+            return errorResponse;
         }
     }
 
@@ -1390,6 +1408,7 @@ public class UssdController {
                 // Go back to main YOLO menu
                 session.setCurrentState("main_menu");
                 sessionRepo.save(session);
+                logSessionInteraction(session.getSessionId(), phoneNumber, "NAVIGATION_BACK", "Gwamon Menu", selection, "Returned to main menu", false, null);
                 return showMainMenuText();
             }
             
@@ -1413,6 +1432,18 @@ public class UssdController {
                 session.setCurrentState("payment_menu");
                 session.setSelectedBundleId((long) selectedBundle.getId());
                 sessionRepo.save(session);
+                
+                // Log bundle selection
+                logSessionInteraction(
+                    session.getSessionId(), 
+                    phoneNumber, 
+                    "BUNDLE_SELECTED", 
+                    "Gwamon Menu", 
+                    selection, 
+                    "Selected: " + selectedBundle.getUssdDisplayFormat(),
+                    false, 
+                    selectedBundle.getId()
+                );
                 
                 StringBuilder paymentMenu = new StringBuilder();
                 paymentMenu.append("CON Pay ").append(selectedBundle.getUssdDisplayFormat()).append(" via:\n");
@@ -1582,10 +1613,13 @@ public class UssdController {
             sessionRepo.save(session);
             
             String currentState = session.getCurrentState();
+            String response;
             
             if (currentState == null || "main_menu".equals(currentState)) {
                 // User is in main YOLO menu - handle option selection
-                return handleMainMenuSelectionText(selection.trim(), phoneNumber, session);
+                response = handleMainMenuSelectionText(selection.trim(), phoneNumber, session);
+                logSessionInteraction(sessionId, phoneNumber, "MENU_SELECTION", "Main Menu", selection.trim(), response, false, null);
+                return response;
             } else if ("next_page".equals(currentState)) {
                 // User is in next page - handle next page selection
                 return handleNextPageSelectionText(selection.trim(), phoneNumber, session);
@@ -1730,6 +1764,18 @@ public class UssdController {
             
             purchaseRepo.save(purchase);
             
+            // Log successful purchase
+            logSessionInteraction(
+                session.getSessionId(), 
+                phoneNumber, 
+                "PURCHASE_COMPLETED", 
+                "Payment Menu", 
+                paymentSelection, 
+                "Purchase successful: " + bundleDescription + " via " + paymentMethodName,
+                true, 
+                selectedBundle.getId()
+            );
+            
             // Clean up session
             session.deactivate();
             sessionRepo.save(session);
@@ -1850,6 +1896,15 @@ public class UssdController {
         } catch (Exception e) {
             System.err.println("Error during session cleanup: " + e.getMessage());
         }
+    }
+
+    /**
+     * Logs a session interaction to the database
+     */
+    private void logSessionInteraction(String sessionId, String phoneNumber, String action, 
+                                       String menuDisplayed, String userInput, String response, 
+                                       boolean purchaseCompleted, Long bundleId) {
+        sessionLogService.logInteraction(sessionId, phoneNumber, action, menuDisplayed, userInput, response, purchaseCompleted, bundleId);
     }
 
     /**
