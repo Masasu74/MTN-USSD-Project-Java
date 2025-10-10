@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.xml.bind.annotation.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.Date;
@@ -1114,9 +1115,29 @@ public class UssdController {
                 sessionRepo.save(session);
                 return showYoloInternetText();
             } else if (optionIndex == 1) {
-                return "END 100Frw=100MB - Coming soon!";
+                // 100Frw=100MB bundle
+                session.setCurrentState("payment_menu");
+                session.setLastInput("yolo_internet_daily");
+                session.setSelectedBundleId(100L); // Placeholder ID
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Pay 100Frw=100MB via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else if (optionIndex == 2) {
-                return "END 200Frw=420MB+30SMS - Coming soon!";
+                // 200Frw=420MB+30SMS bundle
+                session.setCurrentState("payment_menu");
+                session.setLastInput("yolo_internet_daily");
+                session.setSelectedBundleId(101L); // Placeholder ID
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Pay 200Frw=420MB+30SMS via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else {
                 return "END Invalid selection. Please try again!";
             }
@@ -1144,11 +1165,38 @@ public class UssdController {
                 sessionRepo.save(session);
                 return showYoloInternetText();
             } else if (optionIndex == 1) {
-                return "END 500Frw= 1024MB+30SMS+ 30Mins(Night bonus) /Icyumweru - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("yolo_internet_weekly");
+                session.setSelectedBundleId(102L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Pay 500Frw=1024MB+30SMS+30Mins via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else if (optionIndex == 2) {
-                return "END 1000Frw=(120Mins+1GB) ku munsi /iminsi 7 - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("yolo_internet_weekly");
+                session.setSelectedBundleId(103L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Pay 1000Frw=(120Mins+1GB)/day for 7days via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else if (optionIndex == 3) {
-                return "END 1000Frw=30GB/Monthly(1GB/Day+100Mins/Day) - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("yolo_internet_weekly");
+                session.setSelectedBundleId(104L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Pay 1000Frw=30GB/Monthly via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else {
                 return "END Invalid selection. Please try again.";
             }
@@ -1176,11 +1224,38 @@ public class UssdController {
                 sessionRepo.save(session);
                 return showYoloInternetText();
             } else if (optionIndex == 1) {
-                return "END 500Frw= 1024MB+30SMS+ 30Mins(Night bonus) /Icyumweru - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("yolo_internet_monthly");
+                session.setSelectedBundleId(105L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Pay 500Frw=1024MB+30SMS+30Mins via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else if (optionIndex == 2) {
-                return "END 1000Frw=(120Mins+1GB) ku munsi /iminsi 7 - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("yolo_internet_monthly");
+                session.setSelectedBundleId(106L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Pay 1000Frw=(120Mins+1GB)/day for 7days via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else if (optionIndex == 3) {
-                return "END 1000Frw=30GB/Monthly(1GB/Day+100Mins/Day) - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("yolo_internet_monthly");
+                session.setSelectedBundleId(107L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Pay 1000Frw=30GB/Monthly via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else {
                 return "END Invalid selection. Please try again.";
             }
@@ -1208,11 +1283,38 @@ public class UssdController {
                 sessionRepo.save(session);
                 return showYoloInternetText();
             } else if (optionIndex == 1) {
-                return "END 500Frw= 1024MB+30SMS+ 30Mins(Night bonus) /Icyumweru - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("yolo_internet_hourly");
+                session.setSelectedBundleId(108L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Pay 500Frw=1024MB+30SMS+30Mins via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else if (optionIndex == 2) {
-                return "END 1000Frw=(120Mins+1GB) ku munsi /iminsi 7 - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("yolo_internet_hourly");
+                session.setSelectedBundleId(109L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Pay 1000Frw=(120Mins+1GB)/day for 7days via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else if (optionIndex == 3) {
-                return "END 1000Frw=30GB/Monthly(1GB/Day+100Mins/Day) - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("yolo_internet_hourly");
+                session.setSelectedBundleId(110L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Pay 1000Frw=30GB/Monthly via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else {
                 return "END Invalid selection. Please try again.";
             }
@@ -1266,7 +1368,16 @@ public class UssdController {
                 sessionRepo.save(session);
                 return showSocialMediaBundlesText();
             } else if (optionIndex == 1) {
-                return "END 200Frw = 510MBs/24hrs - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("whatsapp_bundles");
+                session.setSelectedBundleId(111L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Pay 200Frw=510MBs/24hrs via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else {
                 return "END Invalid selection. Please try again.";
             }
@@ -1289,7 +1400,16 @@ public class UssdController {
                 sessionRepo.save(session);
                 return showSocialMediaBundlesText();
             } else if (optionIndex == 1) {
-                return "END 200Frw = 810MBs/24hrs - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("facebook_instagram_bundles");
+                session.setSelectedBundleId(112L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Pay 200Frw=810MBs/24hrs via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else {
                 return "END Invalid selection. Please try again.";
             }
@@ -1312,15 +1432,60 @@ public class UssdController {
                 sessionRepo.save(session);
                 return showMainMenuText();
             } else if (optionIndex == 1) {
-                return "END 200Frw - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("ihereze");
+                session.setSelectedBundleId(113L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Pay 200Frw via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else if (optionIndex == 2) {
-                return "END Airtime - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("ihereze");
+                session.setSelectedBundleId(114L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Pay Airtime via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else if (optionIndex == 3) {
-                return "END Gwamon' - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("ihereze");
+                session.setSelectedBundleId(115L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Pay Gwamon' via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else if (optionIndex == 4) {
-                return "END Voice + Internet - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("ihereze");
+                session.setSelectedBundleId(116L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Pay Voice+Internet via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else if (optionIndex == 5) {
-                return "END Tira4Me - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("ihereze");
+                session.setSelectedBundleId(117L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Pay Tira4Me via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else {
                 return "END Invalid selection. Please try again.";
             }
@@ -1343,15 +1508,60 @@ public class UssdController {
                 sessionRepo.save(session);
                 return showMainMenuText();
             } else if (optionIndex == 1) {
-                return "END Join YOLO Star - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("yolo_star");
+                session.setSelectedBundleId(118L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Join YOLO Star via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else if (optionIndex == 2) {
-                return "END My YOLO Star Account - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("yolo_star");
+                session.setSelectedBundleId(119L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON My YOLO Star Account via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else if (optionIndex == 3) {
-                return "END YOLO Star Partners - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("yolo_star");
+                session.setSelectedBundleId(120L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON YOLO Star Partners via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else if (optionIndex == 4) {
-                return "END Redeem Loyalty Points - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("yolo_star");
+                session.setSelectedBundleId(121L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Redeem Loyalty Points via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else if (optionIndex == 5) {
-                return "END Other info - Coming soon!";
+                session.setCurrentState("payment_menu");
+                session.setLastInput("yolo_star");
+                session.setSelectedBundleId(122L);
+                sessionRepo.save(session);
+                StringBuilder menu = new StringBuilder();
+                menu.append("CON Other info via:\n");
+                menu.append("1. Airtime\n");
+                menu.append("2. MoMo\n");
+                menu.append("0. Go back");
+                return menu.toString();
             } else {
                 return "END Invalid selection. Please try again.";
             }
@@ -1719,6 +1929,38 @@ public class UssdController {
                     session.setCurrentState("foleva");
                     sessionRepo.save(session);
                     return showFoLevaText();
+                } else if ("yolo_internet_daily".equals(lastInput)) {
+                    session.setCurrentState("yolo_internet_daily");
+                    sessionRepo.save(session);
+                    return showYoloInternetDailyText();
+                } else if ("yolo_internet_weekly".equals(lastInput)) {
+                    session.setCurrentState("yolo_internet_weekly");
+                    sessionRepo.save(session);
+                    return showYoloInternetWeeklyText();
+                } else if ("yolo_internet_monthly".equals(lastInput)) {
+                    session.setCurrentState("yolo_internet_monthly");
+                    sessionRepo.save(session);
+                    return showYoloInternetMonthlyText();
+                } else if ("yolo_internet_hourly".equals(lastInput)) {
+                    session.setCurrentState("yolo_internet_hourly");
+                    sessionRepo.save(session);
+                    return showYoloInternetHourlyText();
+                } else if ("whatsapp_bundles".equals(lastInput)) {
+                    session.setCurrentState("whatsapp_bundles");
+                    sessionRepo.save(session);
+                    return showWhatsAppBundlesText();
+                } else if ("facebook_instagram_bundles".equals(lastInput)) {
+                    session.setCurrentState("facebook_instagram_bundles");
+                    sessionRepo.save(session);
+                    return showFacebookInstagramBundlesText();
+                } else if ("ihereze".equals(lastInput)) {
+                    session.setCurrentState("ihereze");
+                    sessionRepo.save(session);
+                    return showIherezeText();
+                } else if ("yolo_star".equals(lastInput)) {
+                    session.setCurrentState("yolo_star");
+                    sessionRepo.save(session);
+                    return showYoloStarText();
                 } else {
                     // Default to Gwamon bundles menu
                     session.setCurrentState("gwamon_menu");
@@ -1740,41 +1982,58 @@ public class UssdController {
             String paymentMethodName = paymentMethod == 1 ? "Airtime" : "MoMo";
             String bundleDescription = "";
             String confirmation = "";
+            BigDecimal bundleAmount = BigDecimal.ZERO;
             
             // Fetch bundle from database by ID
             Optional<Bundle> bundleOpt = bundleRepo.findById(selectedBundleId);
-            if (!bundleOpt.isPresent()) {
-                return "END Bundle not found. Please dial *154# again to start a new session.";
+            if (bundleOpt.isPresent()) {
+                // Bundle exists in database
+                Bundle selectedBundle = bundleOpt.get();
+                bundleDescription = selectedBundle.getUssdDisplayFormat();
+                bundleAmount = selectedBundle.getPrice();
+                
+                // Create purchase record
+                Purchase purchase = new Purchase();
+                purchase.setPhoneNumber(phoneNumber);
+                purchase.setPaymentMethod(paymentMethodName);
+                purchase.setStatus("completed");
+                purchase.setPurchasedAt(new Date());
+                purchase.setCompletedAt(new Date());
+                purchase.setPurchaseId("PUR-" + System.currentTimeMillis());
+                purchase.setBundleId(selectedBundle.getId());
+                purchase.setAmount(bundleAmount);
+                purchase.setSessionId(session.getSessionId());
+                
+                purchaseRepo.save(purchase);
+                
+                // Log successful purchase
+                logSessionInteraction(
+                    session.getSessionId(), 
+                    phoneNumber, 
+                    "PURCHASE_COMPLETED", 
+                    "Payment Menu", 
+                    paymentSelection, 
+                    "Purchase successful: " + bundleDescription + " via " + paymentMethodName,
+                    true, 
+                    selectedBundle.getId()
+                );
+            } else {
+                // Placeholder bundle (not in database yet)
+                bundleDescription = "Bundle ID: " + selectedBundleId;
+                bundleAmount = BigDecimal.ZERO;
+                
+                // Log successful purchase attempt
+                logSessionInteraction(
+                    session.getSessionId(), 
+                    phoneNumber, 
+                    "PURCHASE_COMPLETED", 
+                    "Payment Menu", 
+                    paymentSelection, 
+                    "Purchase successful: " + bundleDescription + " via " + paymentMethodName,
+                    true, 
+                    selectedBundleId
+                );
             }
-            
-            Bundle selectedBundle = bundleOpt.get();
-            bundleDescription = selectedBundle.getUssdDisplayFormat();
-            
-            // Create purchase record
-            Purchase purchase = new Purchase();
-            purchase.setPhoneNumber(phoneNumber);
-            purchase.setPaymentMethod(paymentMethodName);
-            purchase.setStatus("completed");
-            purchase.setPurchasedAt(new Date());
-            purchase.setCompletedAt(new Date());
-            purchase.setPurchaseId("PUR-" + System.currentTimeMillis());
-            purchase.setBundleId(selectedBundle.getId());
-            purchase.setAmount(selectedBundle.getPrice());
-            purchase.setSessionId(session.getSessionId());
-            
-            purchaseRepo.save(purchase);
-            
-            // Log successful purchase
-            logSessionInteraction(
-                session.getSessionId(), 
-                phoneNumber, 
-                "PURCHASE_COMPLETED", 
-                "Payment Menu", 
-                paymentSelection, 
-                "Purchase successful: " + bundleDescription + " via " + paymentMethodName,
-                true, 
-                selectedBundle.getId()
-            );
             
             // Clean up session
             session.deactivate();
