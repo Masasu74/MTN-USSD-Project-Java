@@ -2020,7 +2020,21 @@ public class UssdController {
             } else {
                 // Placeholder bundle (not in database yet)
                 bundleDescription = "Bundle ID: " + selectedBundleId;
-                bundleAmount = BigDecimal.ZERO;
+                bundleAmount = getPlaceholderBundleAmount(selectedBundleId);
+                
+                // Create purchase record for placeholder bundle
+                Purchase purchase = new Purchase();
+                purchase.setPhoneNumber(phoneNumber);
+                purchase.setPaymentMethod(paymentMethodName);
+                purchase.setStatus("completed");
+                purchase.setPurchasedAt(new Date());
+                purchase.setCompletedAt(new Date());
+                purchase.setPurchaseId("PUR-" + System.currentTimeMillis());
+                purchase.setBundleId(selectedBundleId);
+                purchase.setAmount(bundleAmount);
+                purchase.setSessionId(session.getSessionId());
+                
+                purchaseRepo.save(purchase);
                 
                 // Log successful purchase attempt
                 logSessionInteraction(
@@ -2172,6 +2186,39 @@ public class UssdController {
     @GetMapping("/test")
     public UssdResponse testUssd() {
         return showMainMenu();
+    }
+
+    /**
+     * Get the correct amount for placeholder bundles based on bundle ID
+     */
+    private BigDecimal getPlaceholderBundleAmount(Long bundleId) {
+        // Define amounts for placeholder bundles based on their bundle IDs
+        switch (bundleId.intValue()) {
+            case 102: return new BigDecimal("500.00");   // 500Frw=1024MB+30SMS+30Mins
+            case 103: return new BigDecimal("1000.00");  // 1000Frw=(120Mins+1GB)/day for 7days
+            case 104: return new BigDecimal("1000.00");  // 1000Frw=30GB/Monthly
+            case 105: return new BigDecimal("500.00");   // 500Frw=1024MB+30SMS+30Mins (Monthly)
+            case 106: return new BigDecimal("1000.00");  // 1000Frw=(120Mins+1GB)/day for 7days (Monthly)
+            case 107: return new BigDecimal("1000.00");  // 1000Frw=30GB/Monthly (Monthly)
+            case 108: return new BigDecimal("500.00");   // 500Frw=1024MB+30SMS+30Mins (Hourly)
+            case 109: return new BigDecimal("1000.00");  // 1000Frw=(120Mins+1GB)/day for 7days (Hourly)
+            case 110: return new BigDecimal("1000.00");  // 1000Frw=30GB/Monthly (Hourly)
+            case 111: return new BigDecimal("200.00");   // 200Frw=510MBs/24hrs (WhatsApp)
+            case 112: return new BigDecimal("200.00");   // 200Frw=810MBs/24hrs (Facebook/Instagram)
+            case 113: return new BigDecimal("200.00");   // 200Frw (Ihereze)
+            case 114: return new BigDecimal("0.00");     // Airtime (Ihereze)
+            case 115: return new BigDecimal("0.00");     // Gwamon' (Ihereze)
+            case 116: return new BigDecimal("0.00");     // Voice+Internet (Ihereze)
+            case 117: return new BigDecimal("0.00");     // Tira4Me (Ihereze)
+            case 118: return new BigDecimal("0.00");     // Join YOLO Star
+            case 119: return new BigDecimal("0.00");     // My YOLO Star Account
+            case 120: return new BigDecimal("0.00");     // YOLO Star Partners
+            case 121: return new BigDecimal("0.00");     // Redeem Loyalty Points
+            case 122: return new BigDecimal("0.00");     // Other info
+            case 100: return new BigDecimal("100.00");   // 100Frw=100MB (Daily)
+            case 101: return new BigDecimal("200.00");   // 200Frw=420MB+30SMS (Daily)
+            default: return new BigDecimal("0.00");      // Unknown placeholder bundle
+        }
     }
 
     /**
