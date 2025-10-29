@@ -62,17 +62,18 @@ public class UssdController {
     private SessionLogService sessionLogService;
 
     /**
-     * POST /ussd - Main USSD endpoint
+     * POST /ussd/154 - USSD endpoint for *154# short code
      * Handles USSD session requests from telecom providers
      * 
      * @param request USSD request containing session info and user input
      * @return USSD response with menu or confirmation
      */
-    @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.APPLICATION_XML_VALUE}, produces = MediaType.TEXT_PLAIN_VALUE)
-    public String handleUssdRequest(@RequestParam(required = false) String sessionid,
-                                   @RequestParam(required = false) String msidn,
-                                   @RequestParam(required = false) String input,
-                                   @RequestBody(required = false) String xmlBody) {
+    @PostMapping(value = "/154", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.APPLICATION_XML_VALUE}, produces = MediaType.TEXT_PLAIN_VALUE)
+    public String handleUssdRequest154(@RequestParam(required = false) String sessionid,
+                                      @RequestParam(required = false) String msidn,
+                                      @RequestParam(required = false) String input,
+                                      @RequestParam(required = false) String newrequest,
+                                      @RequestBody(required = false) String xmlBody) {
         try {
             String sessionId = sessionid;
             String phoneNumber = msidn;
@@ -83,15 +84,143 @@ public class UssdController {
                 sessionId = extractXmlValue(xmlBody, "sessionid");
                 phoneNumber = extractXmlValue(xmlBody, "msidn");
                 text = extractXmlValue(xmlBody, "input");
+                newrequest = extractXmlValue(xmlBody, "newrequest");
             }
             
-            System.out.println("USSD Request - Session: " + sessionId + ", Phone: " + phoneNumber + ", Text: " + text);
+            System.out.println("USSD Request 154 - Session: " + sessionId + ", Phone: " + phoneNumber + ", Text: " + text + ", NewRequest: " + newrequest);
             
             // Handle USSD flow with database session management
             String response;
-            if (text == null || text.isEmpty()) {
-                // Initial request - create or get session and show main menu
-                response = handleInitialRequest(sessionId, phoneNumber);
+            if ("true".equalsIgnoreCase(newrequest)) {
+                // New request - always show main menu regardless of input
+                response = handleInitialRequest(sessionId, phoneNumber, "154");
+                System.out.println("DEBUG: About to log session interaction. SessionLogService is " + (sessionLogService == null ? "NULL" : "initialized"));
+                logSessionInteraction(sessionId, phoneNumber, "SESSION_START", "Main Menu", text != null ? text : "", response, false, null);
+            } else if (text == null || text.isEmpty()) {
+                // Initial request with no input - create or get session and show main menu
+                response = handleInitialRequest(sessionId, phoneNumber, "154");
+                System.out.println("DEBUG: About to log session interaction. SessionLogService is " + (sessionLogService == null ? "NULL" : "initialized"));
+                logSessionInteraction(sessionId, phoneNumber, "SESSION_START", "Main Menu", "", response, false, null);
+            } else {
+                // User made a selection - handle based on session state
+                response = handleUserSelectionText(text, phoneNumber, sessionId);
+                // Log will be done inside handleUserSelectionText for specific actions
+            }
+            
+            return response;
+            
+        } catch (Exception e) {
+            System.err.println("Error processing USSD request: " + e.getMessage());
+            e.printStackTrace();
+            String errorResponse = "END Sorry, an error occurred. Please try again later.";
+            try {
+                logSessionInteraction(sessionid, msidn, "ERROR", "Error", input, e.getMessage(), false, null);
+            } catch (Exception logError) {
+                System.err.println("Failed to log error: " + logError.getMessage());
+            }
+            return errorResponse;
+        }
+    }
+
+    /**
+     * POST /ussd/345 - USSD endpoint for *345# short code
+     * Handles USSD session requests from telecom providers
+     * 
+     * @param request USSD request containing session info and user input
+     * @return USSD response with menu or confirmation
+     */
+    @PostMapping(value = "/345", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.APPLICATION_XML_VALUE}, produces = MediaType.TEXT_PLAIN_VALUE)
+    public String handleUssdRequest345(@RequestParam(required = false) String sessionid,
+                                      @RequestParam(required = false) String msidn,
+                                      @RequestParam(required = false) String input,
+                                      @RequestParam(required = false) String newrequest,
+                                      @RequestBody(required = false) String xmlBody) {
+        try {
+            String sessionId = sessionid;
+            String phoneNumber = msidn;
+            String text = input;
+            
+            // Handle XML request if form data is null
+            if (sessionId == null && phoneNumber == null && text == null && xmlBody != null) {
+                sessionId = extractXmlValue(xmlBody, "sessionid");
+                phoneNumber = extractXmlValue(xmlBody, "msidn");
+                text = extractXmlValue(xmlBody, "input");
+                newrequest = extractXmlValue(xmlBody, "newrequest");
+            }
+            
+            System.out.println("USSD Request 345 - Session: " + sessionId + ", Phone: " + phoneNumber + ", Text: " + text + ", NewRequest: " + newrequest);
+            
+            // Handle USSD flow with database session management
+            String response;
+            if ("true".equalsIgnoreCase(newrequest)) {
+                // New request - always show main menu regardless of input
+                response = handleInitialRequest(sessionId, phoneNumber, "345");
+                System.out.println("DEBUG: About to log session interaction. SessionLogService is " + (sessionLogService == null ? "NULL" : "initialized"));
+                logSessionInteraction(sessionId, phoneNumber, "SESSION_START", "Main Menu", text != null ? text : "", response, false, null);
+            } else if (text == null || text.isEmpty()) {
+                // Initial request with no input - create or get session and show main menu
+                response = handleInitialRequest(sessionId, phoneNumber, "345");
+                System.out.println("DEBUG: About to log session interaction. SessionLogService is " + (sessionLogService == null ? "NULL" : "initialized"));
+                logSessionInteraction(sessionId, phoneNumber, "SESSION_START", "Main Menu", "", response, false, null);
+            } else {
+                // User made a selection - handle based on session state
+                response = handleUserSelectionText(text, phoneNumber, sessionId);
+                // Log will be done inside handleUserSelectionText for specific actions
+            }
+            
+            return response;
+            
+        } catch (Exception e) {
+            System.err.println("Error processing USSD request: " + e.getMessage());
+            e.printStackTrace();
+            String errorResponse = "END Sorry, an error occurred. Please try again later.";
+            try {
+                logSessionInteraction(sessionid, msidn, "ERROR", "Error", input, e.getMessage(), false, null);
+            } catch (Exception logError) {
+                System.err.println("Failed to log error: " + logError.getMessage());
+            }
+            return errorResponse;
+        }
+    }
+
+    /**
+     * POST /ussd/140 - USSD endpoint for *140# short code
+     * Handles USSD session requests from telecom providers
+     * 
+     * @param request USSD request containing session info and user input
+     * @return USSD response with menu or confirmation
+     */
+    @PostMapping(value = "/140", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.APPLICATION_XML_VALUE}, produces = MediaType.TEXT_PLAIN_VALUE)
+    public String handleUssdRequest140(@RequestParam(required = false) String sessionid,
+                                      @RequestParam(required = false) String msidn,
+                                      @RequestParam(required = false) String input,
+                                      @RequestParam(required = false) String newrequest,
+                                      @RequestBody(required = false) String xmlBody) {
+        try {
+            String sessionId = sessionid;
+            String phoneNumber = msidn;
+            String text = input;
+            
+            // Handle XML request if form data is null
+            if (sessionId == null && phoneNumber == null && text == null && xmlBody != null) {
+                sessionId = extractXmlValue(xmlBody, "sessionid");
+                phoneNumber = extractXmlValue(xmlBody, "msidn");
+                text = extractXmlValue(xmlBody, "input");
+                newrequest = extractXmlValue(xmlBody, "newrequest");
+            }
+            
+            System.out.println("USSD Request 140 - Session: " + sessionId + ", Phone: " + phoneNumber + ", Text: " + text + ", NewRequest: " + newrequest);
+            
+            // Handle USSD flow with database session management
+            String response;
+            if ("true".equalsIgnoreCase(newrequest)) {
+                // New request - always show main menu regardless of input
+                response = handleInitialRequest(sessionId, phoneNumber, "140");
+                System.out.println("DEBUG: About to log session interaction. SessionLogService is " + (sessionLogService == null ? "NULL" : "initialized"));
+                logSessionInteraction(sessionId, phoneNumber, "SESSION_START", "Main Menu", text != null ? text : "", response, false, null);
+            } else if (text == null || text.isEmpty()) {
+                // Initial request with no input - create or get session and show main menu
+                response = handleInitialRequest(sessionId, phoneNumber, "140");
                 System.out.println("DEBUG: About to log session interaction. SessionLogService is " + (sessionLogService == null ? "NULL" : "initialized"));
                 logSessionInteraction(sessionId, phoneNumber, "SESSION_START", "Main Menu", "", response, false, null);
             } else {
@@ -141,8 +270,15 @@ public class UssdController {
      * Shows the main YOLO menu as plain text - DYNAMICALLY from database
      */
     private String showMainMenuText() {
+        return showMainMenuText("154");
+    }
+    
+    /**
+     * Shows the main YOLO menu as plain text - DYNAMICALLY from database with short code
+     */
+    private String showMainMenuText(String shortCode) {
         StringBuilder menu = new StringBuilder();
-        menu.append("CON YOLO\n");
+        menu.append("CON YOLO (*").append(shortCode).append("#)\n");
         menu.append("Choose an option:\n\n");
         
         // Fetch main menu categories from database (parent_id is NULL)
@@ -1725,7 +1861,7 @@ public class UssdController {
     /**
      * Handles initial USSD request - creates or retrieves session
      */
-    private String handleInitialRequest(String sessionId, String phoneNumber) {
+    private String handleInitialRequest(String sessionId, String phoneNumber, String shortCode) {
         try {
             // Clean up expired sessions first
             sessionRepo.deactivateExpiredSessions(LocalDateTime.now());
@@ -1750,7 +1886,7 @@ public class UssdController {
                     session.deactivate();
                     sessionRepo.save(session);
                     System.out.println("Session " + sessionId + " was expired, creating new session for " + phoneNumber);
-                    return createNewSessionAndShowMenu(sessionId, phoneNumber);
+                    return createNewSessionAndShowMenu(sessionId, phoneNumber, shortCode);
                 } else {
                     // Extend existing session and show menu
                     session.extendSession();
@@ -1759,7 +1895,7 @@ public class UssdController {
                 }
             } else {
                 // Create new session
-                return createNewSessionAndShowMenu(sessionId, phoneNumber);
+                return createNewSessionAndShowMenu(sessionId, phoneNumber, shortCode);
             }
         } catch (Exception e) {
             System.err.println("Error handling initial request: " + e.getMessage());
@@ -1770,10 +1906,10 @@ public class UssdController {
     /**
      * Creates new session and shows main menu
      */
-    private String createNewSessionAndShowMenu(String sessionId, String phoneNumber) {
-        UssdSession newSession = new UssdSession(sessionId, phoneNumber);
+    private String createNewSessionAndShowMenu(String sessionId, String phoneNumber, String shortCode) {
+        UssdSession newSession = new UssdSession(sessionId, phoneNumber, shortCode);
         sessionRepo.save(newSession);
-        return showMainMenuText();
+        return showMainMenuText(shortCode);
     }
     
     /**
@@ -2114,13 +2250,24 @@ public class UssdController {
             String sessionId = extractXmlValue(xmlRequest, "sessionid");
             String phoneNumber = extractXmlValue(xmlRequest, "msidn");
             String text = extractXmlValue(xmlRequest, "input");
+            String newrequest = extractXmlValue(xmlRequest, "newrequest");
+            String serviceCode = extractXmlValue(xmlRequest, "servicecode");
             
-            System.out.println("XML USSD Request - Session: " + sessionId + ", Phone: " + phoneNumber + ", Text: " + text);
+            // Extract short code from service code (e.g., "*154#" -> "154")
+            String shortCode = "154"; // Default
+            if (serviceCode != null && serviceCode.startsWith("*") && serviceCode.endsWith("#")) {
+                shortCode = serviceCode.substring(1, serviceCode.length() - 1);
+            }
+            
+            System.out.println("XML USSD Request - Session: " + sessionId + ", Phone: " + phoneNumber + ", Text: " + text + ", NewRequest: " + newrequest + ", ServiceCode: " + serviceCode);
             
             // Handle USSD flow with database session management
-            if (text == null || text.isEmpty()) {
-                // Initial request - create or get session and show main menu
-                return handleInitialRequest(sessionId, phoneNumber);
+            if ("true".equalsIgnoreCase(newrequest)) {
+                // New request - always show main menu regardless of input
+                return handleInitialRequest(sessionId, phoneNumber, shortCode);
+            } else if (text == null || text.isEmpty()) {
+                // Initial request with no input - create or get session and show main menu
+                return handleInitialRequest(sessionId, phoneNumber, shortCode);
             } else {
                 // User made a selection - handle based on session state
                 return handleUserSelectionText(text, phoneNumber, sessionId);

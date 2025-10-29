@@ -88,3 +88,6 @@ echo "🏁 All bundle tests completed!"
 echo "Checking final database state..."
 /Applications/XAMPP/xamppfiles/bin/mysql -uroot -P3307 -h127.0.0.1 mtn_ussd -e "SELECT bundle_id, amount, COUNT(*) as count FROM purchases WHERE bundle_id IN (100,101,102,103,111,112) GROUP BY bundle_id, amount ORDER BY bundle_id;" 2>&1
 
+
+
+

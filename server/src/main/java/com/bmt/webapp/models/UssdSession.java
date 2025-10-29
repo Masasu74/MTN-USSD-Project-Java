@@ -21,6 +21,9 @@ public class UssdSession {
     @Column(name = "phone_number", nullable = false, length = 20)
     private String phoneNumber;
     
+    @Column(name = "short_code", length = 10)
+    private String shortCode; // 154, 345, 140, etc.
+    
     @Column(name = "current_state", length = 100)
     private String currentState; // main_menu, payment_menu, etc.
     
@@ -57,6 +60,17 @@ public class UssdSession {
     public UssdSession(String sessionId, String phoneNumber) {
         this.sessionId = sessionId;
         this.phoneNumber = phoneNumber;
+        this.shortCode = "154"; // Default to 154
+        this.currentState = "main_menu";
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+        this.expiresAt = LocalDateTime.now().plusMinutes(10); // 10 minutes timeout
+    }
+    
+    public UssdSession(String sessionId, String phoneNumber, String shortCode) {
+        this.sessionId = sessionId;
+        this.phoneNumber = phoneNumber;
+        this.shortCode = shortCode;
         this.currentState = "main_menu";
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
@@ -72,6 +86,9 @@ public class UssdSession {
     
     public String getPhoneNumber() { return phoneNumber; }
     public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+    
+    public String getShortCode() { return shortCode; }
+    public void setShortCode(String shortCode) { this.shortCode = shortCode; }
     
     public String getCurrentState() { return currentState; }
     public void setCurrentState(String currentState) { 

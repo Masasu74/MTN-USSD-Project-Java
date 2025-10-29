@@ -17,7 +17,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * Access Methods:
  * - Frontend web interface
  * - Postman API testing
- * - USSD code like *154# (for future USSD integration)
+ * - USSD codes: *154#, *345#, *140#
  * 
  * API Endpoints:
  * - GET /api/bundles - Get all bundles
@@ -27,6 +27,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * - DELETE /api/bundles/{id} - Delete bundle
  * - POST /api/bundles/purchase - Purchase a bundle
  * - GET /api/bundles/purchases - Get purchase history
+ * 
+ * USSD Endpoints:
+ * - POST /ussd/154 - Handle *154# requests
+ * - POST /ussd/345 - Handle *345# requests  
+ * - POST /ussd/140 - Handle *140# requests
+ * - POST /ussd/xml - Handle XML USSD requests
  */
 @SpringBootApplication
 @EnableScheduling
@@ -37,6 +43,11 @@ public class WebappApplication {
 		System.out.println("MTN YOLO USSD Application started successfully!");
 		System.out.println("Access the API at: http://localhost:8080/api/bundles");
 		System.out.println("Frontend should connect to: http://localhost:8080");
+		System.out.println("USSD Endpoints:");
+		System.out.println("  - http://localhost:8080/ussd/154 (for *154#)");
+		System.out.println("  - http://localhost:8080/ussd/345 (for *345#)");
+		System.out.println("  - http://localhost:8080/ussd/140 (for *140#)");
+		System.out.println("  - http://localhost:8080/ussd/xml (for XML requests)");
 	}
 
 }
