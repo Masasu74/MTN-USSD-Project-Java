@@ -285,8 +285,23 @@ public class BundlesController {
             purchase.setPurchaseId("PUR-" + System.currentTimeMillis());
             purchase.setBundleId(bundle.getId());
             purchase.setAmount(bundle.getPrice());
+            
+            // Save sessionId if provided
+            if (purchaseRequest.getSessionId() != null && !purchaseRequest.getSessionId().trim().isEmpty()) {
+                purchase.setSessionId(purchaseRequest.getSessionId());
+            }
+            
+            // Save bundle snapshot as JSON
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                String bundleSnapshot = objectMapper.writeValueAsString(bundle);
+                purchase.setBundleSnapshot(bundleSnapshot);
+            } catch (Exception e) {
+                System.err.println("Warning: Failed to create bundle snapshot: " + e.getMessage());
+            }
 
             Purchase savedPurchase = purchaseRepo.save(purchase);
+            System.out.println("✓ Purchase saved with ID: " + savedPurchase.getId() + " for bundle: " + bundle.getName());
 
             SuccessResponse successResponse = new SuccessResponse(
                 "Bundle purchased successfully! Your " + bundle.getName() + " is now active.",
@@ -325,6 +340,7 @@ public class BundlesController {
         private Long bundleId;
         private String phoneNumber;
         private String paymentMethod;
+        private String sessionId; // Optional session ID
 
         // Getters and Setters
         public Long getBundleId() {
@@ -349,6 +365,14 @@ public class BundlesController {
 
         public void setPaymentMethod(String paymentMethod) {
             this.paymentMethod = paymentMethod;
+        }
+
+        public String getSessionId() {
+            return sessionId;
+        }
+
+        public void setSessionId(String sessionId) {
+            this.sessionId = sessionId;
         }
     }
 }

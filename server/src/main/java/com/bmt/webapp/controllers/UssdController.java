@@ -112,6 +112,21 @@ public class UssdController {
         } catch (Exception e) {
             System.err.println("Error processing USSD request: " + e.getMessage());
             e.printStackTrace();
+            // If newrequest is true, show menu instead of error
+            try {
+                String newrequestValue = newrequest;
+                if (newrequestValue == null && xmlBody != null) {
+                    newrequestValue = extractXmlValue(xmlBody, "newrequest");
+                }
+                
+                if ("true".equalsIgnoreCase(newrequestValue)) {
+                    // New request - show main menu instead of error
+                    return showMainMenuText("154");
+                }
+            } catch (Exception fallbackError) {
+                System.err.println("Error in fallback menu display: " + fallbackError.getMessage());
+            }
+            
             String errorResponse = "END Sorry, an error occurred. Please try again later.";
             try {
                 logSessionInteraction(sessionid, msidn, "ERROR", "Error", input, e.getMessage(), false, null);
@@ -173,6 +188,21 @@ public class UssdController {
         } catch (Exception e) {
             System.err.println("Error processing USSD request: " + e.getMessage());
             e.printStackTrace();
+            // If newrequest is true, show menu instead of error
+            try {
+                String newrequestValue = newrequest;
+                if (newrequestValue == null && xmlBody != null) {
+                    newrequestValue = extractXmlValue(xmlBody, "newrequest");
+                }
+                
+                if ("true".equalsIgnoreCase(newrequestValue)) {
+                    // New request - show main menu instead of error
+                    return showMainMenuText("345");
+                }
+            } catch (Exception fallbackError) {
+                System.err.println("Error in fallback menu display: " + fallbackError.getMessage());
+            }
+            
             String errorResponse = "END Sorry, an error occurred. Please try again later.";
             try {
                 logSessionInteraction(sessionid, msidn, "ERROR", "Error", input, e.getMessage(), false, null);
@@ -234,6 +264,21 @@ public class UssdController {
         } catch (Exception e) {
             System.err.println("Error processing USSD request: " + e.getMessage());
             e.printStackTrace();
+            // If newrequest is true, show menu instead of error
+            try {
+                String newrequestValue = newrequest;
+                if (newrequestValue == null && xmlBody != null) {
+                    newrequestValue = extractXmlValue(xmlBody, "newrequest");
+                }
+                
+                if ("true".equalsIgnoreCase(newrequestValue)) {
+                    // New request - show main menu instead of error
+                    return showMainMenuText("140");
+                }
+            } catch (Exception fallbackError) {
+                System.err.println("Error in fallback menu display: " + fallbackError.getMessage());
+            }
+            
             String errorResponse = "END Sorry, an error occurred. Please try again later.";
             try {
                 logSessionInteraction(sessionid, msidn, "ERROR", "Error", input, e.getMessage(), false, null);
@@ -1842,8 +1887,19 @@ public class UssdController {
             purchase.setPurchaseId("PUR-" + System.currentTimeMillis());
             purchase.setBundleId(selectedBundle.getId());
             purchase.setAmount(selectedBundle.getPrice());
+            purchase.setSessionId(session.getSessionId());
             
-            purchaseRepo.save(purchase);
+            // Save bundle snapshot as JSON
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                String bundleSnapshot = objectMapper.writeValueAsString(selectedBundle);
+                purchase.setBundleSnapshot(bundleSnapshot);
+            } catch (Exception e) {
+                System.err.println("Warning: Failed to create bundle snapshot: " + e.getMessage());
+            }
+            
+            Purchase savedPurchase = purchaseRepo.save(purchase);
+            System.out.println("✓ USSD Purchase saved with ID: " + savedPurchase.getId() + " for bundle: " + selectedBundle.getName());
             
             String confirmation = String.format(
                 "Purchase successful!\n%s purchased via %s.\nThank you for using MTN YOLO USSD!",
@@ -1899,7 +1955,13 @@ public class UssdController {
             }
         } catch (Exception e) {
             System.err.println("Error handling initial request: " + e.getMessage());
-            return "END Sorry, an error occurred. Please try again later.";
+            // Try to show menu as fallback instead of error
+            try {
+                return showMainMenuText(shortCode);
+            } catch (Exception fallbackError) {
+                System.err.println("Error in fallback menu display: " + fallbackError.getMessage());
+                return "END Sorry, an error occurred. Please try again later.";
+            }
         }
     }
     
@@ -1908,7 +1970,8 @@ public class UssdController {
      */
     private String createNewSessionAndShowMenu(String sessionId, String phoneNumber, String shortCode) {
         UssdSession newSession = new UssdSession(sessionId, phoneNumber, shortCode);
-        sessionRepo.save(newSession);
+        UssdSession savedSession = sessionRepo.save(newSession);
+        System.out.println("✓ Session saved with ID: " + savedSession.getId() + " for phone " + phoneNumber + " (sessionId: " + sessionId + ")");
         return showMainMenuText(shortCode);
     }
     
@@ -1944,19 +2007,61 @@ public class UssdController {
                 return "END Invalid input. Please try again.";
             }
             
-            // Validate session
-            String sessionError = validateSession(sessionId, phoneNumber);
-            if (sessionError != null) {
-                return sessionError;
-            }
+            // Try to find session by sessionId first
+            Optional<UssdSession> sessionOpt = sessionRepo.findActiveSessionBySessionId(sessionId);
+            UssdSession session;
             
-            // Get session from database (we know it exists and is valid from validation above)
-            UssdSession session = sessionRepo.findActiveSessionBySessionId(sessionId).get();
+            if (sessionOpt.isPresent()) {
+                session = sessionOpt.get();
+                // Validate session is not expired
+                if (session.isExpired()) {
+                    System.out.println("Session " + sessionId + " expired for phone " + phoneNumber);
+                    session.deactivate();
+                    sessionRepo.save(session);
+                    // Try to find another active session by phone number
+                    List<UssdSession> phoneSessions = sessionRepo.findActiveSessionsByPhoneNumber(phoneNumber);
+                    if (!phoneSessions.isEmpty()) {
+                    // Use the most recent active session
+                    session = phoneSessions.get(0);
+                    // Update sessionId to match current request
+                    session.setSessionId(sessionId);
+                    session.extendSession();
+                    UssdSession reusedSession = sessionRepo.save(session);
+                    System.out.println("✓ Reusing existing session for phone " + phoneNumber + " with new sessionId " + sessionId + " (DB ID: " + reusedSession.getId() + ")");
+                    } else {
+                        // No active session found, create new one and treat as main menu
+                        System.out.println("No active session found, creating new session for phone " + phoneNumber);
+                        session = new UssdSession(sessionId, phoneNumber, "154");
+                        UssdSession newSession = sessionRepo.save(session);
+                        System.out.println("✓ New session created with ID: " + newSession.getId() + " for phone " + phoneNumber + " (expired session scenario)");
+                    }
+                }
+            } else {
+                // Session not found by sessionId, try to find by phone number
+                System.out.println("Session " + sessionId + " not found, searching by phone number " + phoneNumber);
+                List<UssdSession> phoneSessions = sessionRepo.findActiveSessionsByPhoneNumber(phoneNumber);
+                if (!phoneSessions.isEmpty()) {
+                    // Use existing active session and update sessionId
+                    session = phoneSessions.get(0);
+                    session.setSessionId(sessionId);
+                    session.extendSession();
+                    UssdSession updatedSession = sessionRepo.save(session);
+                    System.out.println("✓ Found active session for phone " + phoneNumber + ", updated sessionId to " + sessionId + " (DB ID: " + updatedSession.getId() + ")");
+                } else {
+                    // No session found at all, create new one and treat as main menu
+                    System.out.println("No session found, creating new session for phone " + phoneNumber + " and processing selection");
+                    session = new UssdSession(sessionId, phoneNumber, "154");
+                    session.setCurrentState("main_menu");
+                    UssdSession savedSession = sessionRepo.save(session);
+                    System.out.println("✓ New session created with ID: " + savedSession.getId() + " for phone " + phoneNumber);
+                }
+            }
             
             // Update session with new input
             session.setLastInput(selection.trim());
             session.extendSession();
-            sessionRepo.save(session);
+            UssdSession savedSession = sessionRepo.save(session);
+            System.out.println("✓ Session updated with ID: " + savedSession.getId() + " for phone " + phoneNumber + " (state: " + session.getCurrentState() + ")");
             
             String currentState = session.getCurrentState();
             String response;
@@ -2275,6 +2380,22 @@ public class UssdController {
             
         } catch (Exception e) {
             System.err.println("Error processing XML USSD request: " + e.getMessage());
+            // If newrequest is true, show menu instead of error
+            try {
+                String newrequest = extractXmlValue(xmlRequest, "newrequest");
+                String serviceCode = extractXmlValue(xmlRequest, "servicecode");
+                String shortCode = "154"; // Default
+                if (serviceCode != null && serviceCode.startsWith("*") && serviceCode.endsWith("#")) {
+                    shortCode = serviceCode.substring(1, serviceCode.length() - 1);
+                }
+                
+                if ("true".equalsIgnoreCase(newrequest)) {
+                    // New request - show main menu instead of error
+                    return showMainMenuText(shortCode);
+                }
+            } catch (Exception fallbackError) {
+                System.err.println("Error in fallback menu display: " + fallbackError.getMessage());
+            }
             return "Sorry, an error occurred. Please try again later.";
         }
     }
