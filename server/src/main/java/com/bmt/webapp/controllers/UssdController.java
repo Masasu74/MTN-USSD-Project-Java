@@ -1886,8 +1886,9 @@ public class UssdController {
             purchase.setCompletedAt(new Date());
             purchase.setPurchaseId("PUR-" + System.currentTimeMillis());
             purchase.setBundleId(selectedBundle.getId());
+            purchase.setBundle(selectedBundle); // Set bundle relationship explicitly
             purchase.setAmount(selectedBundle.getPrice());
-            purchase.setSessionId(session.getSessionId());
+            // Note: sessionId not available in this legacy method
             
             // Save bundle snapshot as JSON
             try {
@@ -2136,7 +2137,23 @@ public class UssdController {
             }
         } catch (Exception e) {
             System.err.println("Error handling user selection: " + e.getMessage());
-            return "END Sorry, an error occurred. Please try again later.";
+            e.printStackTrace(); // Print full stack trace for debugging
+            // Try to show menu as fallback instead of error
+            try {
+                // Try to create or get session and show main menu
+                Optional<UssdSession> fallbackSession = sessionRepo.findActiveSessionBySessionId(sessionId);
+                if (!fallbackSession.isPresent()) {
+                    // Create new session
+                    UssdSession newSession = new UssdSession(sessionId, phoneNumber, "154");
+                    newSession.setCurrentState("main_menu");
+                    sessionRepo.save(newSession);
+                }
+                return showMainMenuText("154");
+            } catch (Exception fallbackError) {
+                System.err.println("Error in fallback menu display: " + fallbackError.getMessage());
+                fallbackError.printStackTrace();
+                return "END Sorry, an error occurred. Please try again later.";
+            }
         }
     }
 
@@ -2242,8 +2259,18 @@ public class UssdController {
                 purchase.setCompletedAt(new Date());
                 purchase.setPurchaseId("PUR-" + System.currentTimeMillis());
                 purchase.setBundleId(selectedBundle.getId());
+                purchase.setBundle(selectedBundle); // Set bundle relationship explicitly
                 purchase.setAmount(bundleAmount);
                 purchase.setSessionId(session.getSessionId());
+                
+                // Save bundle snapshot as JSON
+                try {
+                    com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    String bundleSnapshot = objectMapper.writeValueAsString(selectedBundle);
+                    purchase.setBundleSnapshot(bundleSnapshot);
+                } catch (Exception e) {
+                    System.err.println("Warning: Failed to create bundle snapshot: " + e.getMessage());
+                }
                 
                 purchaseRepo.save(purchase);
                 
@@ -2380,23 +2407,42 @@ public class UssdController {
             
         } catch (Exception e) {
             System.err.println("Error processing XML USSD request: " + e.getMessage());
-            // If newrequest is true, show menu instead of error
+            e.printStackTrace(); // Print full stack trace for debugging
+            // Try to show menu as fallback instead of error
             try {
                 String newrequest = extractXmlValue(xmlRequest, "newrequest");
                 String serviceCode = extractXmlValue(xmlRequest, "servicecode");
+                String sessionId = extractXmlValue(xmlRequest, "sessionid");
+                String phoneNumber = extractXmlValue(xmlRequest, "msidn");
+                String text = extractXmlValue(xmlRequest, "input");
+                
                 String shortCode = "154"; // Default
                 if (serviceCode != null && serviceCode.startsWith("*") && serviceCode.endsWith("#")) {
                     shortCode = serviceCode.substring(1, serviceCode.length() - 1);
                 }
                 
+                // If newrequest is true, always show menu
                 if ("true".equalsIgnoreCase(newrequest)) {
-                    // New request - show main menu instead of error
+                    return showMainMenuText(shortCode);
+                }
+                
+                // If newrequest is false but there's an error, try to create session and show menu
+                // This provides graceful fallback for navigation errors
+                if (sessionId != null && phoneNumber != null) {
+                    Optional<UssdSession> existingSession = sessionRepo.findActiveSessionBySessionId(sessionId);
+                    if (!existingSession.isPresent()) {
+                        // Create new session
+                        UssdSession newSession = new UssdSession(sessionId, phoneNumber, shortCode);
+                        newSession.setCurrentState("main_menu");
+                        sessionRepo.save(newSession);
+                    }
                     return showMainMenuText(shortCode);
                 }
             } catch (Exception fallbackError) {
                 System.err.println("Error in fallback menu display: " + fallbackError.getMessage());
+                fallbackError.printStackTrace();
             }
-            return "Sorry, an error occurred. Please try again later.";
+            return "END Sorry, an error occurred. Please try again later.";
         }
     }
     

@@ -284,6 +284,7 @@ public class BundlesController {
             purchase.setCompletedAt(new Date());
             purchase.setPurchaseId("PUR-" + System.currentTimeMillis());
             purchase.setBundleId(bundle.getId());
+            purchase.setBundle(bundle); // Set bundle relationship explicitly
             purchase.setAmount(bundle.getPrice());
             
             // Save sessionId if provided

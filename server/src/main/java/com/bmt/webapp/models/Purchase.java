@@ -223,38 +223,145 @@ public class Purchase {
     }
 
     // Convenience methods to access bundle details
+    // Uses bundle relationship if available, otherwise falls back to bundleSnapshot
     @JsonProperty("bundleName")
     public String getBundleName() {
-        return bundle != null ? bundle.getName() : null;
+        if (bundle != null) {
+            return bundle.getName();
+        }
+        // Fallback to bundleSnapshot if bundle is null
+        return getBundlePropertyFromSnapshot("name");
     }
 
     @JsonProperty("bundlePrice")
     public BigDecimal getBundlePrice() {
-        return bundle != null ? bundle.getPrice() : BigDecimal.ZERO;
+        if (bundle != null) {
+            return bundle.getPrice();
+        }
+        // Fallback to amount if bundleSnapshot doesn't have price
+        if (amount != null) {
+            return amount;
+        }
+        // Try to get from bundleSnapshot
+        String priceStr = getBundlePropertyFromSnapshot("price");
+        if (priceStr != null && !priceStr.isEmpty()) {
+            try {
+                return new BigDecimal(priceStr);
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
+        return BigDecimal.ZERO;
     }
 
     @JsonProperty("bundleData")
     public Integer getBundleData() {
-        return bundle != null ? bundle.getDataMb() : 0;
+        if (bundle != null) {
+            return bundle.getDataMb();
+        }
+        // Fallback to bundleSnapshot
+        String dataStr = getBundlePropertyFromSnapshot("dataMb");
+        if (dataStr == null || dataStr.isEmpty()) {
+            dataStr = getBundlePropertyFromSnapshot("data"); // Legacy field
+        }
+        if (dataStr != null && !dataStr.isEmpty()) {
+            try {
+                return Integer.parseInt(dataStr);
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
+        return 0;
     }
 
     @JsonProperty("bundleMinutes")
     public Integer getBundleMinutes() {
-        return bundle != null ? bundle.getMinutes() : 0;
+        if (bundle != null) {
+            return bundle.getMinutes();
+        }
+        // Fallback to bundleSnapshot
+        String minutesStr = getBundlePropertyFromSnapshot("minutes");
+        if (minutesStr != null && !minutesStr.isEmpty()) {
+            try {
+                return Integer.parseInt(minutesStr);
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
+        return 0;
     }
 
     @JsonProperty("bundleSms")
     public Integer getBundleSms() {
-        return bundle != null ? bundle.getSms() : 0;
+        if (bundle != null) {
+            return bundle.getSms();
+        }
+        // Fallback to bundleSnapshot
+        String smsStr = getBundlePropertyFromSnapshot("sms");
+        if (smsStr != null && !smsStr.isEmpty()) {
+            try {
+                return Integer.parseInt(smsStr);
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
+        return 0;
     }
 
     @JsonProperty("bundleValidUntil")
     public Integer getBundleValidUntil() {
-        return bundle != null ? bundle.getValidityHours() : 0;
+        if (bundle != null) {
+            return bundle.getValidityHours();
+        }
+        // Fallback to bundleSnapshot
+        String validStr = getBundlePropertyFromSnapshot("validityHours");
+        if (validStr == null || validStr.isEmpty()) {
+            validStr = getBundlePropertyFromSnapshot("validUntil"); // Legacy field
+        }
+        if (validStr != null && !validStr.isEmpty()) {
+            try {
+                return Integer.parseInt(validStr);
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
+        return 0;
     }
 
     @JsonProperty("bundleIsWeekend")
     public Boolean isBundleIsWeekend() {
-        return bundle != null && bundle.getIsWeekend() != null && bundle.getIsWeekend();
+        if (bundle != null && bundle.getIsWeekend() != null) {
+            return bundle.getIsWeekend();
+        }
+        // Fallback to bundleSnapshot
+        String isWeekendStr = getBundlePropertyFromSnapshot("isWeekend");
+        if (isWeekendStr != null && !isWeekendStr.isEmpty()) {
+            return Boolean.parseBoolean(isWeekendStr);
+        }
+        return false;
+    }
+    
+    /**
+     * Helper method to extract a property from bundleSnapshot JSON
+     */
+    private String getBundlePropertyFromSnapshot(String propertyName) {
+        if (bundleSnapshot == null || bundleSnapshot.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode jsonNode = objectMapper.readTree(bundleSnapshot);
+            com.fasterxml.jackson.databind.JsonNode propertyNode = jsonNode.get(propertyName);
+            if (propertyNode != null) {
+                if (propertyNode.isTextual()) {
+                    return propertyNode.asText();
+                } else {
+                    return propertyNode.asText(); // Will convert number to string
+                }
+            }
+        } catch (Exception e) {
+            // Ignore parsing errors
+        }
+        return null;
     }
 }
