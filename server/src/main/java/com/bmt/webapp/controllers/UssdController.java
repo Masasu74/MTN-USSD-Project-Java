@@ -79,12 +79,18 @@ public class UssdController {
             String phoneNumber = msidn;
             String text = input;
             
-            // Handle XML request if form data is null
-            if (sessionId == null && phoneNumber == null && text == null && xmlBody != null) {
-                sessionId = extractXmlValue(xmlBody, "sessionid");
-                phoneNumber = extractXmlValue(xmlBody, "msidn");
-                text = extractXmlValue(xmlBody, "input");
-                newrequest = extractXmlValue(xmlBody, "newrequest");
+            // Handle XML request - if xmlBody exists, extract values from XML (XML takes precedence)
+            if (xmlBody != null && !xmlBody.trim().isEmpty()) {
+                String xmlSessionId = extractXmlValue(xmlBody, "sessionid");
+                String xmlPhoneNumber = extractXmlValue(xmlBody, "msidn");
+                String xmlText = extractXmlValue(xmlBody, "input");
+                String xmlNewrequest = extractXmlValue(xmlBody, "newrequest");
+                
+                // Use XML values if they exist, otherwise use request params
+                if (xmlSessionId != null && !xmlSessionId.isEmpty()) sessionId = xmlSessionId;
+                if (xmlPhoneNumber != null && !xmlPhoneNumber.isEmpty()) phoneNumber = xmlPhoneNumber;
+                if (xmlText != null && !xmlText.isEmpty()) text = xmlText;
+                if (xmlNewrequest != null && !xmlNewrequest.isEmpty()) newrequest = xmlNewrequest;
             }
             
             System.out.println("USSD Request 154 - Session: " + sessionId + ", Phone: " + phoneNumber + ", Text: " + text + ", NewRequest: " + newrequest);
@@ -92,19 +98,36 @@ public class UssdController {
             // Handle USSD flow with database session management
             String response;
             if ("true".equalsIgnoreCase(newrequest)) {
-                // New request - always show main menu regardless of input
-                response = handleInitialRequest(sessionId, phoneNumber, "154");
-                System.out.println("DEBUG: About to log session interaction. SessionLogService is " + (sessionLogService == null ? "NULL" : "initialized"));
-                logSessionInteraction(sessionId, phoneNumber, "SESSION_START", "Main Menu", text != null ? text : "", response, false, null);
+                // New request - check if session exists and is expired
+                Optional<UssdSession> existingSession = sessionRepo.findActiveSessionBySessionId(sessionId);
+                if (existingSession.isPresent() && existingSession.get().isExpired()) {
+                    // Session exists but is expired - return session ended message
+                    response = "END Session ended";
+                    System.out.println("Session " + sessionId + " is expired for new request");
+                    logSessionInteraction(sessionId, phoneNumber, "SESSION_EXPIRED", "Session Ended", text != null ? text : "", response, false, null);
+                } else {
+                    // New request - show main menu
+                    response = handleInitialRequest(sessionId, phoneNumber, "154");
+                    System.out.println("DEBUG: About to log session interaction. SessionLogService is " + (sessionLogService == null ? "NULL" : "initialized"));
+                    logSessionInteraction(sessionId, phoneNumber, "SESSION_START", "Main Menu", text != null ? text : "", response, false, null);
+                }
             } else if (text == null || text.isEmpty()) {
                 // Initial request with no input - create or get session and show main menu
                 response = handleInitialRequest(sessionId, phoneNumber, "154");
                 System.out.println("DEBUG: About to log session interaction. SessionLogService is " + (sessionLogService == null ? "NULL" : "initialized"));
                 logSessionInteraction(sessionId, phoneNumber, "SESSION_START", "Main Menu", "", response, false, null);
             } else {
-                // User made a selection - handle based on session state
-                response = handleUserSelectionText(text, phoneNumber, sessionId);
-                // Log will be done inside handleUserSelectionText for specific actions
+                // User made a selection - check if text contains navigation path (e.g., *2*2 or 2*2)
+                if (text != null && text.contains("*")) {
+                    // Long navigation string detected - parse and navigate
+                    System.out.println("DEBUG: Long navigation path detected: " + text);
+                    response = handleLongNavigationPath(text, sessionId, phoneNumber, "154");
+                    logSessionInteraction(sessionId, phoneNumber, "LONG_NAVIGATION", "Long Navigation", text, response, false, null);
+                } else {
+                    // Regular single selection - handle based on session state
+                    response = handleUserSelectionText(text, phoneNumber, sessionId);
+                    // Log will be done inside handleUserSelectionText for specific actions
+                }
             }
             
             return response;
@@ -127,7 +150,7 @@ public class UssdController {
                 System.err.println("Error in fallback menu display: " + fallbackError.getMessage());
             }
             
-            String errorResponse = "END Sorry, an error occurred. Please try again later.";
+            String errorResponse = "END Session ended";
             try {
                 logSessionInteraction(sessionid, msidn, "ERROR", "Error", input, e.getMessage(), false, null);
             } catch (Exception logError) {
@@ -155,12 +178,18 @@ public class UssdController {
             String phoneNumber = msidn;
             String text = input;
             
-            // Handle XML request if form data is null
-            if (sessionId == null && phoneNumber == null && text == null && xmlBody != null) {
-                sessionId = extractXmlValue(xmlBody, "sessionid");
-                phoneNumber = extractXmlValue(xmlBody, "msidn");
-                text = extractXmlValue(xmlBody, "input");
-                newrequest = extractXmlValue(xmlBody, "newrequest");
+            // Handle XML request - if xmlBody exists, extract values from XML (XML takes precedence)
+            if (xmlBody != null && !xmlBody.trim().isEmpty()) {
+                String xmlSessionId = extractXmlValue(xmlBody, "sessionid");
+                String xmlPhoneNumber = extractXmlValue(xmlBody, "msidn");
+                String xmlText = extractXmlValue(xmlBody, "input");
+                String xmlNewrequest = extractXmlValue(xmlBody, "newrequest");
+                
+                // Use XML values if they exist, otherwise use request params
+                if (xmlSessionId != null && !xmlSessionId.isEmpty()) sessionId = xmlSessionId;
+                if (xmlPhoneNumber != null && !xmlPhoneNumber.isEmpty()) phoneNumber = xmlPhoneNumber;
+                if (xmlText != null && !xmlText.isEmpty()) text = xmlText;
+                if (xmlNewrequest != null && !xmlNewrequest.isEmpty()) newrequest = xmlNewrequest;
             }
             
             System.out.println("USSD Request 345 - Session: " + sessionId + ", Phone: " + phoneNumber + ", Text: " + text + ", NewRequest: " + newrequest);
@@ -168,19 +197,36 @@ public class UssdController {
             // Handle USSD flow with database session management
             String response;
             if ("true".equalsIgnoreCase(newrequest)) {
-                // New request - always show main menu regardless of input
-                response = handleInitialRequest(sessionId, phoneNumber, "345");
-                System.out.println("DEBUG: About to log session interaction. SessionLogService is " + (sessionLogService == null ? "NULL" : "initialized"));
-                logSessionInteraction(sessionId, phoneNumber, "SESSION_START", "Main Menu", text != null ? text : "", response, false, null);
+                // New request - check if session exists and is expired
+                Optional<UssdSession> existingSession = sessionRepo.findActiveSessionBySessionId(sessionId);
+                if (existingSession.isPresent() && existingSession.get().isExpired()) {
+                    // Session exists but is expired - return session ended message
+                    response = "END Session ended";
+                    System.out.println("Session " + sessionId + " is expired for new request");
+                    logSessionInteraction(sessionId, phoneNumber, "SESSION_EXPIRED", "Session Ended", text != null ? text : "", response, false, null);
+                } else {
+                    // New request - show main menu
+                    response = handleInitialRequest(sessionId, phoneNumber, "345");
+                    System.out.println("DEBUG: About to log session interaction. SessionLogService is " + (sessionLogService == null ? "NULL" : "initialized"));
+                    logSessionInteraction(sessionId, phoneNumber, "SESSION_START", "Main Menu", text != null ? text : "", response, false, null);
+                }
             } else if (text == null || text.isEmpty()) {
                 // Initial request with no input - create or get session and show main menu
                 response = handleInitialRequest(sessionId, phoneNumber, "345");
                 System.out.println("DEBUG: About to log session interaction. SessionLogService is " + (sessionLogService == null ? "NULL" : "initialized"));
                 logSessionInteraction(sessionId, phoneNumber, "SESSION_START", "Main Menu", "", response, false, null);
             } else {
-                // User made a selection - handle based on session state
-                response = handleUserSelectionText(text, phoneNumber, sessionId);
-                // Log will be done inside handleUserSelectionText for specific actions
+                // User made a selection - check if text contains navigation path (e.g., *2*2 or 2*2)
+                if (text != null && text.contains("*")) {
+                    // Long navigation string detected - parse and navigate
+                    System.out.println("DEBUG: Long navigation path detected: " + text);
+                    response = handleLongNavigationPath(text, sessionId, phoneNumber, "345");
+                    logSessionInteraction(sessionId, phoneNumber, "LONG_NAVIGATION", "Long Navigation", text, response, false, null);
+                } else {
+                    // Regular single selection - handle based on session state
+                    response = handleUserSelectionText(text, phoneNumber, sessionId);
+                    // Log will be done inside handleUserSelectionText for specific actions
+                }
             }
             
             return response;
@@ -203,7 +249,7 @@ public class UssdController {
                 System.err.println("Error in fallback menu display: " + fallbackError.getMessage());
             }
             
-            String errorResponse = "END Sorry, an error occurred. Please try again later.";
+            String errorResponse = "END Session ended";
             try {
                 logSessionInteraction(sessionid, msidn, "ERROR", "Error", input, e.getMessage(), false, null);
             } catch (Exception logError) {
@@ -231,12 +277,18 @@ public class UssdController {
             String phoneNumber = msidn;
             String text = input;
             
-            // Handle XML request if form data is null
-            if (sessionId == null && phoneNumber == null && text == null && xmlBody != null) {
-                sessionId = extractXmlValue(xmlBody, "sessionid");
-                phoneNumber = extractXmlValue(xmlBody, "msidn");
-                text = extractXmlValue(xmlBody, "input");
-                newrequest = extractXmlValue(xmlBody, "newrequest");
+            // Handle XML request - if xmlBody exists, extract values from XML (XML takes precedence)
+            if (xmlBody != null && !xmlBody.trim().isEmpty()) {
+                String xmlSessionId = extractXmlValue(xmlBody, "sessionid");
+                String xmlPhoneNumber = extractXmlValue(xmlBody, "msidn");
+                String xmlText = extractXmlValue(xmlBody, "input");
+                String xmlNewrequest = extractXmlValue(xmlBody, "newrequest");
+                
+                // Use XML values if they exist, otherwise use request params
+                if (xmlSessionId != null && !xmlSessionId.isEmpty()) sessionId = xmlSessionId;
+                if (xmlPhoneNumber != null && !xmlPhoneNumber.isEmpty()) phoneNumber = xmlPhoneNumber;
+                if (xmlText != null && !xmlText.isEmpty()) text = xmlText;
+                if (xmlNewrequest != null && !xmlNewrequest.isEmpty()) newrequest = xmlNewrequest;
             }
             
             System.out.println("USSD Request 140 - Session: " + sessionId + ", Phone: " + phoneNumber + ", Text: " + text + ", NewRequest: " + newrequest);
@@ -244,19 +296,36 @@ public class UssdController {
             // Handle USSD flow with database session management
             String response;
             if ("true".equalsIgnoreCase(newrequest)) {
-                // New request - always show main menu regardless of input
-                response = handleInitialRequest(sessionId, phoneNumber, "140");
-                System.out.println("DEBUG: About to log session interaction. SessionLogService is " + (sessionLogService == null ? "NULL" : "initialized"));
-                logSessionInteraction(sessionId, phoneNumber, "SESSION_START", "Main Menu", text != null ? text : "", response, false, null);
+                // New request - check if session exists and is expired
+                Optional<UssdSession> existingSession = sessionRepo.findActiveSessionBySessionId(sessionId);
+                if (existingSession.isPresent() && existingSession.get().isExpired()) {
+                    // Session exists but is expired - return session ended message
+                    response = "END Session ended";
+                    System.out.println("Session " + sessionId + " is expired for new request");
+                    logSessionInteraction(sessionId, phoneNumber, "SESSION_EXPIRED", "Session Ended", text != null ? text : "", response, false, null);
+                } else {
+                    // New request - show main menu
+                    response = handleInitialRequest(sessionId, phoneNumber, "140");
+                    System.out.println("DEBUG: About to log session interaction. SessionLogService is " + (sessionLogService == null ? "NULL" : "initialized"));
+                    logSessionInteraction(sessionId, phoneNumber, "SESSION_START", "Main Menu", text != null ? text : "", response, false, null);
+                }
             } else if (text == null || text.isEmpty()) {
                 // Initial request with no input - create or get session and show main menu
                 response = handleInitialRequest(sessionId, phoneNumber, "140");
                 System.out.println("DEBUG: About to log session interaction. SessionLogService is " + (sessionLogService == null ? "NULL" : "initialized"));
                 logSessionInteraction(sessionId, phoneNumber, "SESSION_START", "Main Menu", "", response, false, null);
             } else {
-                // User made a selection - handle based on session state
-                response = handleUserSelectionText(text, phoneNumber, sessionId);
-                // Log will be done inside handleUserSelectionText for specific actions
+                // User made a selection - check if text contains navigation path (e.g., *2*2 or 2*2)
+                if (text != null && text.contains("*")) {
+                    // Long navigation string detected - parse and navigate
+                    System.out.println("DEBUG: Long navigation path detected: " + text);
+                    response = handleLongNavigationPath(text, sessionId, phoneNumber, "140");
+                    logSessionInteraction(sessionId, phoneNumber, "LONG_NAVIGATION", "Long Navigation", text, response, false, null);
+                } else {
+                    // Regular single selection - handle based on session state
+                    response = handleUserSelectionText(text, phoneNumber, sessionId);
+                    // Log will be done inside handleUserSelectionText for specific actions
+                }
             }
             
             return response;
@@ -279,7 +348,7 @@ public class UssdController {
                 System.err.println("Error in fallback menu display: " + fallbackError.getMessage());
             }
             
-            String errorResponse = "END Sorry, an error occurred. Please try again later.";
+            String errorResponse = "END Session ended";
             try {
                 logSessionInteraction(sessionid, msidn, "ERROR", "Error", input, e.getMessage(), false, null);
             } catch (Exception logError) {
@@ -1886,9 +1955,9 @@ public class UssdController {
             purchase.setCompletedAt(new Date());
             purchase.setPurchaseId("PUR-" + System.currentTimeMillis());
             purchase.setBundleId(selectedBundle.getId());
-            purchase.setBundle(selectedBundle); // Set bundle relationship explicitly
             purchase.setAmount(selectedBundle.getPrice());
-            // Note: sessionId not available in this legacy method
+            // Session ID not available in this method - set to null or empty
+            purchase.setSessionId(null);
             
             // Save bundle snapshot as JSON
             try {
@@ -1915,6 +1984,186 @@ public class UssdController {
         }
     }
 
+    /**
+     * Handles long navigation paths like *154*2*2 or 2*2
+     * Parses the path and navigates through each step programmatically
+     */
+    private String handleLongNavigationPath(String navigationPath, String sessionId, String phoneNumber, String shortCode) {
+        try {
+            System.out.println("Handling long navigation path: " + navigationPath + " for phone " + phoneNumber);
+            
+            // Parse the navigation path - remove leading asterisks and split by asterisk
+            String path = navigationPath.trim();
+            // Remove leading asterisks (e.g., *2*2 becomes 2*2)
+            while (path.startsWith("*")) {
+                path = path.substring(1);
+            }
+            // Remove trailing asterisks if any
+            while (path.endsWith("*")) {
+                path = path.substring(0, path.length() - 1);
+            }
+            
+            if (path.isEmpty()) {
+                // No valid path, show main menu
+                return handleInitialRequest(sessionId, phoneNumber, shortCode);
+            }
+            
+            // Split by asterisk to get navigation steps
+            String[] steps = path.split("\\*");
+            
+            // Remove short code if it's the first step (e.g., "154*2*2" -> "2*2")
+            if (steps.length > 0 && steps[0].equals(shortCode)) {
+                // Remove first element (short code)
+                String[] newSteps = new String[steps.length - 1];
+                System.arraycopy(steps, 1, newSteps, 0, newSteps.length);
+                steps = newSteps;
+                System.out.println("Removed short code " + shortCode + " from path, remaining steps: " + String.join("*", steps));
+            }
+            
+            // If no steps remain after processing, show main menu
+            if (steps.length == 0 || (steps.length == 1 && steps[0].trim().isEmpty())) {
+                return handleInitialRequest(sessionId, phoneNumber, shortCode);
+            }
+            
+            // Create or retrieve session
+            UssdSession session;
+            Optional<UssdSession> sessionOpt = sessionRepo.findActiveSessionBySessionId(sessionId);
+            
+            if (sessionOpt.isPresent()) {
+                session = sessionOpt.get();
+                if (session.isExpired()) {
+                    session.deactivate();
+                    sessionRepo.save(session);
+                    session = new UssdSession(sessionId, phoneNumber, shortCode);
+                    session = sessionRepo.save(session);
+                } else {
+                    session.extendSession();
+                    session = sessionRepo.save(session);
+                }
+            } else {
+                // Create new session
+                session = new UssdSession(sessionId, phoneNumber, shortCode);
+                session = sessionRepo.save(session);
+            }
+            
+            // Start from main menu state
+            session.setCurrentState("main_menu");
+            sessionRepo.save(session);
+            
+            // Navigate through each step
+            String currentState = "main_menu";
+            String response = "";
+            
+            for (int i = 0; i < steps.length; i++) {
+                String step = steps[i].trim();
+                if (step.isEmpty()) {
+                    continue;
+                }
+                
+                System.out.println("Navigating step " + (i + 1) + ": " + step + " from state: " + currentState);
+                
+                // Update session state and navigate
+                if (session == null) {
+                    // Create new session if null
+                    session = new UssdSession(sessionId, phoneNumber, shortCode);
+                    session = sessionRepo.save(session);
+                }
+                session.setCurrentState(currentState);
+                session.setLastInput(step);
+                session.extendSession();
+                session = sessionRepo.save(session);
+                
+                // Handle navigation based on current state
+                if ("main_menu".equals(currentState)) {
+                    response = handleMainMenuSelectionText(step, phoneNumber, session);
+                    currentState = session.getCurrentState();
+                } else if ("next_page".equals(currentState)) {
+                    response = handleNextPageSelectionText(step, phoneNumber, session);
+                    currentState = session.getCurrentState();
+                } else if ("triple_data_promo".equals(currentState)) {
+                    response = handleTripleDataPromoSelectionText(step, phoneNumber, session);
+                    currentState = session.getCurrentState();
+                } else if ("yolo_voice".equals(currentState)) {
+                    response = handleYoloVoiceSelectionText(step, phoneNumber, session);
+                    currentState = session.getCurrentState();
+                } else if ("yolo_voice_next".equals(currentState)) {
+                    response = handleYoloVoiceNextPageSelectionText(step, phoneNumber, session);
+                    currentState = session.getCurrentState();
+                } else if ("yolo_internet".equals(currentState)) {
+                    response = handleYoloInternetSelectionText(step, phoneNumber, session);
+                    currentState = session.getCurrentState();
+                } else if ("yolo_internet_daily".equals(currentState)) {
+                    response = handleYoloInternetDailySelectionText(step, phoneNumber, session);
+                    currentState = session.getCurrentState();
+                } else if ("yolo_internet_weekly".equals(currentState)) {
+                    response = handleYoloInternetWeeklySelectionText(step, phoneNumber, session);
+                    currentState = session.getCurrentState();
+                } else if ("yolo_internet_monthly".equals(currentState)) {
+                    response = handleYoloInternetMonthlySelectionText(step, phoneNumber, session);
+                    currentState = session.getCurrentState();
+                } else if ("yolo_internet_hourly".equals(currentState)) {
+                    response = handleYoloInternetHourlySelectionText(step, phoneNumber, session);
+                    currentState = session.getCurrentState();
+                } else if ("social_media_bundles".equals(currentState)) {
+                    response = handleSocialMediaBundlesSelectionText(step, phoneNumber, session);
+                    currentState = session.getCurrentState();
+                } else if ("whatsapp_bundles".equals(currentState)) {
+                    response = handleWhatsAppBundlesSelectionText(step, phoneNumber, session);
+                    currentState = session.getCurrentState();
+                } else if ("facebook_instagram_bundles".equals(currentState)) {
+                    response = handleFacebookInstagramBundlesSelectionText(step, phoneNumber, session);
+                    currentState = session.getCurrentState();
+                } else if ("other_bundles".equals(currentState)) {
+                    response = handleOtherBundlesSelectionText(step, phoneNumber, session);
+                    currentState = session.getCurrentState();
+                } else if ("desade".equals(currentState)) {
+                    response = handleDesaDeSelectionText(step, phoneNumber, session);
+                    currentState = session.getCurrentState();
+                } else if ("foleva".equals(currentState)) {
+                    response = handleFoLevaSelectionText(step, phoneNumber, session);
+                    currentState = session.getCurrentState();
+                } else if ("ihereze".equals(currentState)) {
+                    response = handleIherezeSelectionText(step, phoneNumber, session);
+                    currentState = session.getCurrentState();
+                } else if ("yolo_star".equals(currentState)) {
+                    response = handleYoloStarSelectionText(step, phoneNumber, session);
+                    currentState = session.getCurrentState();
+                } else if ("gwamon_menu".equals(currentState)) {
+                    response = handleGwamonMenuSelectionText(step, phoneNumber, session);
+                    currentState = session.getCurrentState();
+                } else if ("payment_menu".equals(currentState)) {
+                    // If we reach payment menu, stop navigation and return payment menu
+                    response = showPaymentMenuText();
+                    break;
+                } else {
+                    // Unknown state - return error
+                    return "END Invalid navigation path. Please try again.";
+                }
+                
+                // Check if response is an END message (purchase completed, error, etc.)
+                if (response != null && response.startsWith("END")) {
+                    // Navigation completed (purchase, error, etc.)
+                    return response;
+                }
+                
+                // Update current state from session
+                session = sessionRepo.findActiveSessionBySessionId(sessionId).orElse(session);
+                if (session != null) {
+                    currentState = session.getCurrentState();
+                }
+            }
+            
+            // Return the final menu
+            return response != null && !response.isEmpty() ? response : showMainMenuText(shortCode);
+            
+        } catch (Exception e) {
+            System.err.println("Error handling long navigation path: " + e.getMessage());
+            e.printStackTrace();
+            // Fallback to main menu
+            return handleInitialRequest(sessionId, phoneNumber, shortCode);
+        }
+    }
+    
     /**
      * Handles initial USSD request - creates or retrieves session
      */
@@ -1961,7 +2210,7 @@ public class UssdController {
                 return showMainMenuText(shortCode);
             } catch (Exception fallbackError) {
                 System.err.println("Error in fallback menu display: " + fallbackError.getMessage());
-                return "END Sorry, an error occurred. Please try again later.";
+                return "END Session ended";
             }
         }
     }
@@ -1984,7 +2233,7 @@ public class UssdController {
         
         if (!sessionOpt.isPresent()) {
             System.out.println("Session " + sessionId + " not found for phone " + phoneNumber);
-            return "END Your session has expired. Please dial *154# again to start a new session.";
+            return "END Session ended";
         }
         
         UssdSession session = sessionOpt.get();
@@ -1992,7 +2241,7 @@ public class UssdController {
             System.out.println("Session " + sessionId + " expired for phone " + phoneNumber + " at " + session.getExpiresAt());
             session.deactivate();
             sessionRepo.save(session);
-            return "END Your session has expired due to inactivity. Please dial *154# again to start a new session.";
+            return "END Session ended";
         }
         
         return null; // Session is valid
@@ -2137,23 +2386,7 @@ public class UssdController {
             }
         } catch (Exception e) {
             System.err.println("Error handling user selection: " + e.getMessage());
-            e.printStackTrace(); // Print full stack trace for debugging
-            // Try to show menu as fallback instead of error
-            try {
-                // Try to create or get session and show main menu
-                Optional<UssdSession> fallbackSession = sessionRepo.findActiveSessionBySessionId(sessionId);
-                if (!fallbackSession.isPresent()) {
-                    // Create new session
-                    UssdSession newSession = new UssdSession(sessionId, phoneNumber, "154");
-                    newSession.setCurrentState("main_menu");
-                    sessionRepo.save(newSession);
-                }
-                return showMainMenuText("154");
-            } catch (Exception fallbackError) {
-                System.err.println("Error in fallback menu display: " + fallbackError.getMessage());
-                fallbackError.printStackTrace();
-                return "END Sorry, an error occurred. Please try again later.";
-            }
+            return "END Session ended";
         }
     }
 
@@ -2234,7 +2467,7 @@ public class UssdController {
             // Get selected bundle from session
             Long selectedBundleId = session.getSelectedBundleId();
             if (selectedBundleId == null) {
-                return "END Your session has expired. Please dial *154# again to start a new session.";
+                return "END Session ended";
             }
             
             String paymentMethodName = paymentMethod == 1 ? "Airtime" : "MoMo";
@@ -2259,18 +2492,8 @@ public class UssdController {
                 purchase.setCompletedAt(new Date());
                 purchase.setPurchaseId("PUR-" + System.currentTimeMillis());
                 purchase.setBundleId(selectedBundle.getId());
-                purchase.setBundle(selectedBundle); // Set bundle relationship explicitly
                 purchase.setAmount(bundleAmount);
                 purchase.setSessionId(session.getSessionId());
-                
-                // Save bundle snapshot as JSON
-                try {
-                    com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-                    String bundleSnapshot = objectMapper.writeValueAsString(selectedBundle);
-                    purchase.setBundleSnapshot(bundleSnapshot);
-                } catch (Exception e) {
-                    System.err.println("Warning: Failed to create bundle snapshot: " + e.getMessage());
-                }
                 
                 purchaseRepo.save(purchase);
                 
@@ -2395,54 +2618,50 @@ public class UssdController {
             
             // Handle USSD flow with database session management
             if ("true".equalsIgnoreCase(newrequest)) {
-                // New request - always show main menu regardless of input
-                return handleInitialRequest(sessionId, phoneNumber, shortCode);
+                // New request - check if session exists and is expired
+                Optional<UssdSession> existingSession = sessionRepo.findActiveSessionBySessionId(sessionId);
+                if (existingSession.isPresent() && existingSession.get().isExpired()) {
+                    // Session exists but is expired - return session ended message
+                    System.out.println("Session " + sessionId + " is expired for new request");
+                    return "END Session ended";
+                } else {
+                    // New request - show main menu
+                    return handleInitialRequest(sessionId, phoneNumber, shortCode);
+                }
             } else if (text == null || text.isEmpty()) {
                 // Initial request with no input - create or get session and show main menu
                 return handleInitialRequest(sessionId, phoneNumber, shortCode);
             } else {
-                // User made a selection - handle based on session state
-                return handleUserSelectionText(text, phoneNumber, sessionId);
+                // User made a selection - check if text contains navigation path (e.g., *2*2 or 2*2)
+                if (text != null && text.contains("*")) {
+                    // Long navigation string detected - parse and navigate
+                    System.out.println("DEBUG: Long navigation path detected: " + text);
+                    return handleLongNavigationPath(text, sessionId, phoneNumber, shortCode);
+                } else {
+                    // Regular single selection - handle based on session state
+                    return handleUserSelectionText(text, phoneNumber, sessionId);
+                }
             }
             
         } catch (Exception e) {
             System.err.println("Error processing XML USSD request: " + e.getMessage());
-            e.printStackTrace(); // Print full stack trace for debugging
-            // Try to show menu as fallback instead of error
+            // If newrequest is true, show menu instead of error
             try {
                 String newrequest = extractXmlValue(xmlRequest, "newrequest");
                 String serviceCode = extractXmlValue(xmlRequest, "servicecode");
-                String sessionId = extractXmlValue(xmlRequest, "sessionid");
-                String phoneNumber = extractXmlValue(xmlRequest, "msidn");
-                String text = extractXmlValue(xmlRequest, "input");
-                
                 String shortCode = "154"; // Default
                 if (serviceCode != null && serviceCode.startsWith("*") && serviceCode.endsWith("#")) {
                     shortCode = serviceCode.substring(1, serviceCode.length() - 1);
                 }
                 
-                // If newrequest is true, always show menu
                 if ("true".equalsIgnoreCase(newrequest)) {
-                    return showMainMenuText(shortCode);
-                }
-                
-                // If newrequest is false but there's an error, try to create session and show menu
-                // This provides graceful fallback for navigation errors
-                if (sessionId != null && phoneNumber != null) {
-                    Optional<UssdSession> existingSession = sessionRepo.findActiveSessionBySessionId(sessionId);
-                    if (!existingSession.isPresent()) {
-                        // Create new session
-                        UssdSession newSession = new UssdSession(sessionId, phoneNumber, shortCode);
-                        newSession.setCurrentState("main_menu");
-                        sessionRepo.save(newSession);
-                    }
+                    // New request - show main menu instead of error
                     return showMainMenuText(shortCode);
                 }
             } catch (Exception fallbackError) {
                 System.err.println("Error in fallback menu display: " + fallbackError.getMessage());
-                fallbackError.printStackTrace();
             }
-            return "END Sorry, an error occurred. Please try again later.";
+            return "END Session ended";
         }
     }
     
