@@ -24,12 +24,12 @@ Comprehensive USSD solution built with a Spring Boot backend and a Next.js clien
    ```bash
    git clone https://github.com/Masasu74/MTN-USSD-Project-Java.git
    ```
-2. Provision the database:
+2. Provision the database with the bundled `mtn_ussd.sql` snapshot:
    ```bash
    cd MTN-USSD-Project-Java
-   ./setup_database.sh
+   mysql -u <db_user> -p < mtn_ussd.sql
    ```
-   or manually execute `CREATE_DATABASE.sql` followed by `COMPLETE_DATABASE_SETUP.sql`.
+   Or, if you prefer a clean install, run `./setup_database.sh` (equivalent to executing `CREATE_DATABASE.sql` followed by `COMPLETE_DATABASE_SETUP.sql`).
 3. Start the backend:
    ```bash
    cd server
